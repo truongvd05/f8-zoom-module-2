@@ -1,0 +1,470 @@
+import {
+    $,
+    $$,
+    httpRequest,
+    handleTime,
+    totalSongTime,
+    renderPlayerLeft,
+    escapeHTML,
+    showNotification,
+    renderHero,
+    renderHero1,
+} from "./module.js";
+
+const play = $(".play-btn");
+const iconPlay = $(".js-icon-play");
+const audio = $(".audio-player");
+const btnHuge = $(".play-btn-large");
+const loop = $(".repeat-btn");
+const random = $(".btn-shuffle");
+const timeEnd = $(".js-time-end");
+const volume = $(".volume-container");
+const iconVolume = $(".js-icon-volume");
+const sortBtn = $(".search-library");
+const sortBtnList = $(".sort-btn-list");
+const viewAs = $(".user-view");
+const sidebarContextMenu = $(".sidebar");
+const contexMenu = $(".context-menu");
+const contexMenuPlayList = $(".context-menu-playlist");
+const navtabs = $(".nav-tabs");
+const playCenter = $(".player-center");
+const icomVolume = $(".js-icon-volume");
+const loopBtn = $(".repeat-btn");
+const volumeBar = $(".volume-bar");
+const volumeContaine = $(".js-volume");
+const bar = $(".progress-bar");
+
+let currenindex = 0;
+let isPlay = false;
+let currentSong = 0;
+let isVolume = true;
+let isLoop = false;
+let isRandom = false;
+let lastVolume = audio.volume;
+let ismoveVolume = false;
+let ismoveBar = false;
+// handle click bar
+function handleClickBar() {
+    bar.addEventListener("mousedown", (e) => {
+        ismoveBar = true;
+        UpdateProgress(e);
+    });
+}
+// update tiến trình
+function UpdateProgress(e) {
+    const progressFill = $(".progress-bar");
+    const progressHandle = $(".progress-handle");
+    const rect = progressFill.getBoundingClientRect();
+    let percent = (e.clientX - rect.left) / rect.width;
+    let percent1 = e.clientX - rect.left;
+    percent = Math.min(Math.max(percent, 0), 1);
+    progressFill.style.width = `${percent}px`;
+    progressHandle.style.left = `${percent1}px`;
+    audio.currentTime = percent * audio.duration;
+}
+// handle move on volume
+function changeVolume() {
+    volumeBar.addEventListener("mousedown", (e) => {
+        ismoveVolume = true;
+        updateVolume(e);
+    });
+    document.addEventListener("mousemove", (e) => {
+        if (ismoveVolume) {
+            updateVolume(e);
+        }
+        if (ismoveBar) {
+            UpdateProgress(e);
+        }
+    });
+    document.addEventListener("mouseup", function (e) {
+        ismoveVolume = false;
+        ismoveBar = false;
+    });
+}
+
+function updateVolume(e) {
+    const volume = $(".volume-fill");
+    const markVolume = $(".volume-handle");
+    const rect = volumeBar.getBoundingClientRect();
+    let percent = (e.clientX - rect.left) / rect.width;
+    percent = Math.min(Math.max(percent, 0), 1);
+    audio.volume = percent;
+    lastVolume = audio.volume;
+    volume.style.width = `${audio.volume * 100}%`;
+    markVolume.style.left = `${audio.volume * 100}%`;
+    if (audio.volume === 0) {
+        iconVolume.classList.replace("fa-volume-up", "fa-volume-down");
+        volumeContaine.classList.add("mute");
+    } else {
+        iconVolume.classList.replace("fa-volume-down", "fa-volume-up");
+        volumeContaine.classList.remove("mute");
+    }
+}
+// handle volume
+function handleClickSort() {
+    sortBtnList.addEventListener("click", function (e) {
+        const itemActive = $$(".item-sort.active");
+        const itemClick = e.target.closest(".item-sort");
+        if (itemClick) {
+            itemActive.forEach((item) => {
+                item.classList.remove("active");
+            });
+            itemClick.classList.add("active");
+        }
+        if (e.target.closest(".item-sort")) {
+            const target = e.target;
+            const text = target.textContent;
+            const changeText = $(".sort-btn-text");
+            changeText.innerHTML = escapeHTML(text);
+        }
+        if (e.target.closest("i")) {
+            const icon = $(".icon-view");
+            const className = e.target.className;
+
+            icon.className = `${className} icon-view`;
+        }
+    });
+}
+// thanh tiến trình
+function handleProgress() {
+    const progress = document.querySelector(".progress-fill");
+    const progressHandle = $(".progress-handle");
+    audio.addEventListener("timeupdate", () => {
+        if (audio.duration) {
+            const percent = (audio.currentTime / audio.duration) * 100;
+            progress.style.width = `${percent}%`;
+            progressHandle.style.left = `${percent}%`;
+        }
+    });
+}
+
+//
+function handleControlSong() {
+    playCenter.addEventListener("click", async function (e) {
+        const tracks = await getTrendingTracks();
+        if (e.target.closest(".next-btn")) {
+            handlNextSong(tracks);
+            handleProgress();
+            timeEnd.innerHTML = totalSongTime(tracks[currenindex].duration);
+            handleTime();
+            activeSong(currenindex);
+        }
+        if (e.target.closest(".control-prev")) {
+            handelPrevSong(tracks);
+            handleProgress();
+            timeEnd.innerHTML = totalSongTime(tracks[currenindex].duration);
+            handleTime();
+            activeSong(currenindex);
+        }
+    });
+}
+// handle next Song
+function handlNextSong(tracks) {
+    isPlay = true;
+    currenindex++;
+    currentSong = (currenindex + tracks.length) % tracks.length;
+    audio.src = tracks[currentSong].audio_url;
+    iconPlay.classList.replace("fa-play", "fa-pause");
+    audio.play();
+}
+// handle prve song
+function handelPrevSong(tracks) {
+    isPlay = true;
+    currenindex--;
+    currentSong = (currenindex + tracks.length) % tracks.length;
+    audio.src = tracks[currentSong].audio_url;
+    iconPlay.classList.replace("fa-play", "fa-pause");
+    audio.play();
+}
+
+function handleContextMenu(e) {
+    e.preventDefault();
+}
+contexMenu.addEventListener("contextmenu", handleContextMenu);
+contexMenuPlayList.addEventListener("contextmenu", handleContextMenu);
+// click item artists
+function handleClickItemArtists() {
+    const library = $(".library-content");
+    library.addEventListener("click", function (e) {
+        const item = e.target.closest(".library-artists");
+        const itemActive = document.querySelector(".library-artists.active");
+        let id = null;
+        if (item) {
+            if (itemActive) {
+                itemActive.classList.remove("active");
+            }
+            item.classList.add("active");
+            id = item.dataset.index;
+            renderHero(id);
+        }
+        const item1 = e.target.closest(".library-play-list");
+        const itemActive1 = document.querySelectorAll(
+            ".library-play-list.active"
+        )[0];
+        if (item1) {
+            if (itemActive1) {
+                itemActive1.classList.remove("active");
+            }
+            item1.classList.add("active");
+            id = item1.dataset.index;
+            renderHero1(id);
+        }
+    });
+}
+
+// when user not loggin
+export function showToast() {
+    navtabs.addEventListener("click", toastOnClick);
+}
+
+export function removeShowToast() {
+    if (navtabs) {
+        navtabs.removeEventListener("click", toastOnClick);
+    }
+}
+
+function toastOnClick(e) {
+    console.log(123);
+
+    if (e.target.closest(".js-player-list") || e.target.closest(".js-artist")) {
+        showNotification();
+    }
+}
+
+// when user not loggin
+export function createPlay() {
+    const btn = $(".library-create-btn");
+    const login = $(".library-login");
+    btn.addEventListener("click", function (e) {
+        login.classList.toggle("show");
+    });
+}
+// reload pages
+function handleReload() {
+    const home = $(".home-btn, .logo");
+    home.addEventListener("click", function (e) {
+        location.reload();
+    });
+}
+// handle menu sidebar
+function handleSidebarContextMenu() {
+    sidebarContextMenu.addEventListener("contextmenu", function (e) {
+        console.log(123);
+        e.preventDefault();
+        if (e.target.closest(".library-artists")) {
+            const mouseX = e.pageX;
+            const mouseY = e.pageY;
+            // Gán vị trí cho phần tử
+            contexMenu.style.left = `${mouseX}px`;
+            contexMenu.style.top = `${mouseY}px`;
+            contexMenu.classList.toggle("show");
+        }
+        if (e.target.closest(".library-play-list")) {
+            const mouseX = e.pageX;
+            const mouseY = e.pageY;
+
+            // Gán vị trí cho phần tử
+            contexMenuPlayList.style.left = `${mouseX}px`;
+            contexMenuPlayList.style.top = `${mouseY}px`;
+            contexMenuPlayList.classList.toggle("show");
+        }
+    });
+}
+
+export function removeOnClick() {
+    sidebarContextMenu.removeEventListener("click", onclick);
+}
+document.addEventListener("click", function (e) {
+    contexMenu.classList.remove("show");
+    contexMenuPlayList.classList.remove("show");
+    if (!e.target.closest(".sort-btn") && !e.target.closest(".sort-btn-list")) {
+        sortBtnList.classList.remove("show");
+    }
+});
+// user view as
+function handleView() {
+    viewAs.addEventListener("click", function (e) {
+        const itemActive = $$(".item-view.active");
+        const itemClick = e.target.closest(".item-view");
+        if (itemClick) {
+            itemActive.forEach((item) => {
+                item.classList.remove("active");
+            });
+            itemClick.classList.add("active");
+        }
+    });
+}
+
+// handle btn sort
+function handleSort() {
+    sortBtn.addEventListener("click", function (e) {
+        if (e.target.closest(".sort-btn")) {
+            sortBtnList.classList.toggle("show");
+        }
+    });
+}
+// randomSong
+function handleRandomSong() {
+    random.addEventListener("click", function (e) {
+        if (!isRandom) {
+            isRandom = !isRandom;
+            this.classList.add("active");
+        } else {
+            isRandom = !isRandom;
+            this.classList.remove("active");
+        }
+    });
+}
+// update volume click icon
+function updateVolumeUI(volumePercent) {
+    const volume = $(".volume-fill");
+    const markVolume = $(".volume-handle");
+    volume.style.width = `${volumePercent * 100}%`;
+    markVolume.style.left = `${volumePercent * 100}%`;
+}
+
+// handle volume
+function handleVolume() {
+    volumeContaine.addEventListener("click", function (e) {
+        const target = e.target.closest(".js-volume");
+        lastVolume = audio.volume || 0.5;
+
+        if (target) {
+            target.classList.toggle("mute");
+        }
+        if (target.classList.contains("mute")) {
+            iconVolume.classList.replace("fa-volume-up", "fa-volume-down");
+            audio.volume = 0;
+            updateVolumeUI(0);
+        } else {
+            iconVolume.classList.replace("fa-volume-down", "fa-volume-up");
+            audio.volume = lastVolume;
+            updateVolumeUI(lastVolume);
+        }
+        isVolume = !isVolume;
+    });
+}
+// handle huge btn
+function handleBtnHuge() {
+    btnHuge.addEventListener("click", async function (e) {
+        const tracks = await getTrendingTracks();
+        let currenindex = 0;
+        audio.src = tracks[currenindex].audio_url;
+        audio.play();
+        isPlay = true;
+        activeSong(currenindex);
+        iconPlay.classList.replace("fa-play", "fa-pause");
+        timeEnd.innerHTML = totalSongTime(tracks[currenindex].duration);
+        handleTime();
+    });
+}
+audio.addEventListener("canplay", () => {
+    audio.play();
+});
+audio.addEventListener("ended", async () => {
+    const tracks = await getTrendingTracks();
+    if (isLoop) {
+        audio.loop = isLoop;
+    } else {
+        audio.loop = isLoop;
+        handlNextSong(tracks);
+        activeSong(currenindex);
+    }
+});
+function handleLoop() {
+    if (isLoop) {
+        audio.loop = true;
+    } else {
+        audio.loop = false;
+    }
+}
+
+// loop song
+function handleLoopSong() {
+    loop.addEventListener("click", function (e) {
+        isLoop = !isLoop;
+
+        // Toggle class active
+        this.classList.toggle("active", isLoop);
+
+        // Bật/tắt loop audio
+        audio.loop = isLoop;
+    });
+}
+
+// play song
+function handlePlay() {
+    play.addEventListener("click", function () {
+        this.classList.replace("control-btn-play", "control-btn-pause");
+        if (!isPlay) {
+            isPlay = !isPlay;
+            iconPlay.classList.replace("fa-play", "fa-pause");
+            audio.play();
+            if (audio.readyState > 2) {
+                audio.play();
+            }
+        } else {
+            isPlay = !isPlay;
+            iconPlay.classList.replace("fa-pause", "fa-play");
+            this.classList.replace("control-btn-pause", "control-btn-play");
+            audio.pause();
+        }
+    });
+}
+
+export async function getTrendingTracks(limit = 20) {
+    const { tracks } = await httpRequest.get(`tracks/trending?limit=${limit}`);
+    return tracks;
+}
+export async function getArtists() {
+    const { artists } = await httpRequest.get("artists");
+    return artists;
+}
+
+async function clickPopularSong() {
+    const tracks = await getTrendingTracks();
+    const list = $(".track-list");
+    list.addEventListener("click", (e) => {
+        const item = e.target.closest(".track-item");
+        if (!item) return;
+        const index = item.dataset.index;
+        currenindex = index;
+        audio.src = tracks[index].audio_url;
+        const song = tracks[index];
+        renderPlayerLeft(song);
+        audio.play();
+        isPlay = true;
+        iconPlay.classList.replace("fa-play", "fa-pause");
+        activeSong(currenindex);
+        timeEnd.innerHTML = totalSongTime(tracks[index].duration);
+        handleTime();
+    });
+}
+
+function activeSong(currenindex) {
+    const current = $$(".track-item.playing")[0];
+    const songs = $$(".track-item");
+    if (current) current.classList.remove("playing");
+    const newActive = songs[currenindex];
+    if (newActive) newActive.classList.add("playing");
+}
+// context menu
+
+export function initControl() {
+    handleRandomSong();
+    handleLoopSong();
+    handleBtnHuge();
+    handlePlay();
+    clickPopularSong();
+    handleVolume();
+    handleSort();
+    handleClickSort();
+    handleView();
+    handleSidebarContextMenu();
+    handleReload();
+    handleClickItemArtists();
+    handleControlSong();
+    handleProgress();
+    changeVolume();
+    handleClickBar();
+}
