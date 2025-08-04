@@ -16,6 +16,42 @@
         <link rel="stylesheet" href="css/responsive.css" />
     </head>
     <body>
+        <!-- overlay -->
+        <form class="overlay-create">
+            <div class="wrap-overlay-create">
+                <h1 class="edit-title">Edit details</h1>
+                <div class="wrap-overlay-input">
+                    <form for="input-file">
+                        <span class="input-picture"
+                            ><i class="fa-solid fa-music"></i
+                        ></span>
+                        <input
+                            type="file"
+                            name=""
+                            id="input-file"
+                            accept=".jpg,.jpeg,.png"
+                            hidden
+                        />
+                    </form>
+                    <div class="wrap-input-overlay">
+                        <input type="text" placeholder="My playlist" />
+                        <textarea
+                            class="input-description"
+                            id="description"
+                            rows="4"
+                            placeholder="add an optional description"
+                        ></textarea>
+                    </div>
+                </div>
+                <button class="btn-overlay">Save</button>
+                <p class="text-overlay">
+                    By proceeding, you agree to give Spotify access to the image
+                    you choose to upload.Please make sure you have the right to
+                    updload the image.
+                </p>
+            </div>
+        </form>
+        <!-- end overlay -->
         <div id="toast" class="toast">Đăng nhập để sử dụng!</div>
         <div class="context-menu">
             <ul>
@@ -130,26 +166,7 @@
                     </div>
 
                     <div class="library-content">
-                        <ul class="library-content-folder">
-                            <li
-                                class="library-play-list"
-                                data-index="${item.id}"
-                            >
-                                <img src="" alt="" />
-                            </li>
-                            <li
-                                class="library-play-list"
-                                data-index="${item.id}"
-                            >
-                                <img src="" alt="" />
-                            </li>
-                            <li
-                                class="library-play-list"
-                                data-index="${item.id}"
-                            >
-                                <img src="" alt="" />
-                            </li>
-                        </ul>
+                        <ul class="library-content-folder"></ul>
                     </div>
                 </nav>
             </aside>
@@ -217,6 +234,39 @@
                             </p>
                         </div>
                     </section>
+
+                    <div class="section-input">
+                        <div class="wrap-input">
+                            <div class="labal-input">
+                                <span class="text-input">Chọn ảnh</span>
+                                <i class="fa-solid fa-pencil"></i>
+                                <span>Choose photo</span>
+                            </div>
+                            <div class="title-input">
+                                <h1 class="text-title">Hiển thị thông tin</h1>
+                                <span>Public Playlist</span>
+                                <h2 class="my-playlist">My Playlist</h2>
+                                <p>user name</p>
+                            </div>
+                        </div>
+                        <div class="search-playlist">
+                            <div>
+                                <p class="search-playlist-title">
+                                    let's find something for your playlist
+                                </p>
+                            </div>
+                            <div class="wrap-input-search">
+                                <input
+                                    class="input-search-playlist"
+                                    type="text"
+                                    name=""
+                                    id=""
+                                    placeholder="Search for song or episodes"
+                                />
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Artist Controls -->
                     <section class="artist-controls">

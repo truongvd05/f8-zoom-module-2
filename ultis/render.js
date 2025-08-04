@@ -65,8 +65,6 @@ function renderGrid(list) {
 function renderPro() {
     iconUserView.addEventListener("click", async function (e) {
         const playlists = await getPlaylists();
-        console.log(playlists);
-
         if (e.target.closest(".icon-compact")) {
             renderCompact(playlists);
         }
@@ -130,7 +128,7 @@ async function renderPopularSong(tracks, container) {
                                     </div>
                                 </div>
                                 <div class="track-plays">${escapeHTML(
-                                    item.play_count
+                                    item.play_count.toLocaleString()
                                 )}</div>
                                 <div class="track-duration">${totalSongTime(
                                     item.duration
@@ -260,7 +258,9 @@ export async function renderPlayerList() {
     const { playlists } = await httpRequest.get("playlists?limit=20&offset=0");
     const html = playlists
         .map((item, index) => {
-            return `<div class="library-item library-play-list" data-index="${index}">
+            return `<div class="library-item library-play-list" data-index="${
+                item.id
+            }"">
                         <div class="item-icon liked-songs">
                             <i class="fas fa-heart"></i>
                         </div>

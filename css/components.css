@@ -1248,3 +1248,152 @@
     width: 100%;
     height: 100%;
 }
+
+.wrap-input {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+}
+
+.labal-input {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+    background-color: var(--bg-tertiary);
+    border-radius: 3px;
+    padding: 20px;
+}
+
+.title-input {
+    flex-grow: 3;
+    font-size: 0.8rem;
+}
+
+.text-input {
+    color: red;
+}
+
+.text-title {
+    color: red;
+    font-size: 2rem;
+    text-align: center;
+}
+
+.my-playlist {
+    font-size: 3rem;
+}
+
+.search-playlist,.search-playlist-title {
+    padding: 15px;
+}
+.wrap-input-search {
+    position: relative;
+}
+.input-search-playlist {
+    padding: 5px 5px 5px 35px;
+    color: white;
+    height: 100%;
+    background-color: var(--bg-tertiary);
+    min-width: 300px;
+    border-radius: 3px;
+}
+.wrap-input-search {
+    padding-left: 15px;
+}
+.fa-magnifying-glass {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 25px;
+}
+
+.section-input {
+    opacity: 0;
+    visibility: hidden;
+    position: absolute;
+    inset: 0;
+    background-color: var(--bg-active);
+    z-index: 10;
+}
+.section-input.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+
+.wrap-overlay-create {
+
+    width: 400px;
+    min-height: 200px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: var(--bg-active);
+    padding: 15px;
+    border-radius: 5px;
+}
+.overlay-create.show {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+
+}
+.overlay-create {
+    position: fixed;
+    opacity: 0;
+    visibility: hidden;
+    display: flex;
+    align-items: center ;
+    inset: 0;
+    transform: scale(0.5);
+    z-index: 99;
+    background-color: rgba(24, 17, 17, 0.8);
+    transition: all 0.3s linear;
+}
+.edit-title {
+    margin-bottom: 10px;
+}
+.input-picture {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    height: 100px;
+    background-color: #3f3e3e;
+}
+.input-picture > * {
+    font-size: 3rem;
+}
+.wrap-overlay-input {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.wrap-input-overlay {
+    flex-grow: 2;
+
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.wrap-input-overlay > * {
+    padding: 2px 5px 2px 10px;
+    background-color: #3f3e3e;
+}
+.input-description {
+    flex-grow: 2;
+}
+
+.btn-overlay {
+    display: block;
+    margin-left: auto;
+    background-color: white;
+    padding: 5px 10px;
+    border-radius: 25px;
+    margin-bottom: 5px;
+}
+
+.text-overlay {
+    font-size: 0.7rem;
+}

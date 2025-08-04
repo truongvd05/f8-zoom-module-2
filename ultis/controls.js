@@ -34,6 +34,10 @@ const loopBtn = $(".repeat-btn");
 const volumeBar = $(".volume-bar");
 const volumeContaine = $(".js-volume");
 const bar = $(".progress-bar");
+const signUp = signupForm.querySelector(".auth-form-content");
+const login = loginForm.querySelector(".auth-form-content");
+const createBtn = $(".create-btn");
+const labal = $(".labal-input");
 
 let currenindex = 0;
 let isPlay = false;
@@ -47,13 +51,44 @@ let ismoveBar = false;
 let idArtist = null;
 let idAPlaylist = null;
 
+const sectionControl = $(".artist-controls");
+const sectionPopular = $(".popular-section");
+const sectionAstist = $(".artist-hero");
 export async function getTrendingTracks(limit = 20) {
     const { tracks } = await httpRequest.get(`tracks/trending?limit=${limit}`);
     return tracks;
 }
 
-const signUp = signupForm.querySelector(".auth-form-content");
-const login = loginForm.querySelector(".auth-form-content");
+// show render
+function addPlaylist() {
+    const overlay = $(".overlay-create");
+    labal.addEventListener("click", function () {
+        overlay.classList.add("show");
+    });
+    overlay.addEventListener("click", function (e) {
+        if (e.target === overlay) {
+            overlay.classList.remove("show");
+        }
+    });
+    // close render
+}
+
+function createPlaylist() {
+    const container = $(".section-input");
+    createBtn.addEventListener("click", function () {
+        if (container.classList.contains("show")) {
+            container.classList.remove("show");
+            sectionControl.hidden = false;
+            sectionPopular.hidden = false;
+            sectionAstist.hidden = false;
+        } else {
+            container.classList.add("show");
+            sectionControl.hidden = true;
+            sectionPopular.hidden = true;
+            sectionAstist.hidden = true;
+        }
+    });
+}
 
 // show password resgiter
 function showPassWord(container) {
@@ -292,10 +327,13 @@ export function createPlay() {
 }
 // reload pages
 function handleReload() {
-    const home = $(".home-btn, .logo");
-    home.addEventListener("click", function (e) {
+    const home = $(".home-btn");
+    const logo = $(".logo");
+    function reloadHome() {
         location.reload();
-    });
+    }
+    home.addEventListener("click", reloadHome);
+    logo.addEventListener("click", reloadHome);
 }
 // handle menu sidebar
 function handleSidebarContextMenu() {
@@ -531,4 +569,6 @@ export function initControl() {
     handleClickBar();
     showPassWord(signUp);
     showPassWord(login);
+    createPlaylist();
+    addPlaylist();
 }
