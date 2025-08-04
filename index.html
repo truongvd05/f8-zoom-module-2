@@ -19,11 +19,11 @@
         <div id="toast" class="toast">Đăng nhập để sử dụng!</div>
         <div class="context-menu">
             <ul>
-                <li class="item">
+                <li class="item artist-unfollow">
                     <i class="fa-solid fa-xmark content-icon"></i>
                     <span>Unfollow</span>
                 </li>
-                <li class="item">
+                <li class="item artist-dont">
                     <i class="fa-solid fa-ban content-icon"></i>
                     <span>Dont play this artist</span>
                 </li>
@@ -31,11 +31,11 @@
         </div>
         <div class="context-menu-playlist">
             <ul>
-                <li class="item">
+                <li class="item playlist-remove">
                     <i class="fa-solid fa-xmark content-icon"></i>
                     <span>Remove from profile</span>
                 </li>
-                <li class="item">
+                <li class="item playlist-delete">
                     <i class="fa-solid fa-ban content-icon"></i>
                     <span>Delete</span>
                 </li>
@@ -68,7 +68,12 @@
 
                     <div class="search-library">
                         <button class="search-library-btn">
-                            <i class="fas fa-search"></i>
+                            <input
+                                type="text"
+                                class="library-search"
+                                placeholder="Search..."
+                            />
+                            <i class="fas fa-search library-icon"></i>
                         </button>
                         <button class="sort-btn">
                             <span class="sort-btn-text">Recents</span>
@@ -83,7 +88,7 @@
                             <div class="sort-view-list">
                                 <span class="sort-text">View as</span>
                                 <ul class="user-view">
-                                    <div class="show-toolip">
+                                    <div class="show-toolip icon-compact">
                                         <li class="item-view">
                                             <i class="fa-solid fa-bars"></i>
                                             <span class="view-toolip"
@@ -91,7 +96,7 @@
                                             >
                                         </li>
                                     </div>
-                                    <div class="show-toolip">
+                                    <div class="show-toolip icon-default">
                                         <li class="item-view active">
                                             <i class="fa-solid fa-list"></i>
                                             <span class="view-toolip"
@@ -99,7 +104,7 @@
                                             >
                                         </li>
                                     </div>
-                                    <div class="show-toolip">
+                                    <div class="show-toolip icon-gird">
                                         <li class="item-view">
                                             <i
                                                 class="fa-solid fa-table-cells"
@@ -125,66 +130,26 @@
                     </div>
 
                     <div class="library-content">
-                        <div class="library-item active">
-                            <div class="item-icon liked-songs">
-                                <i class="fas fa-heart"></i>
-                            </div>
-                            <div class="item-info">
-                                <div class="item-title">Liked Songs</div>
-                                <div class="item-subtitle">
-                                    <i class="fas fa-thumbtack"></i>
-                                    Playlist • 3 songs
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="library-item">
-                            <img
-                                src="placeholder.svg?height=48&width=48"
-                                alt="Đen"
-                                class="item-image"
-                            />
-                            <div class="item-info">
-                                <div class="item-title">Đen</div>
-                                <div class="item-subtitle">Artist</div>
-                            </div>
-                        </div>
-
-                        <div class="library-item">
-                            <img
-                                src="placeholder.svg?height=48&width=48"
-                                alt="Trúc Nhân"
-                                class="item-image"
-                            />
-                            <div class="item-info">
-                                <div class="item-title">Trúc Nhân</div>
-                                <div class="item-subtitle">Artist</div>
-                            </div>
-                        </div>
-
-                        <div class="library-item">
-                            <img
-                                src="placeholder.svg?height=48&width=48"
-                                alt="24.03"
-                                class="item-image"
-                            />
-                            <div class="item-info">
-                                <div class="item-title">24.03</div>
-                                <div class="item-subtitle">Playlist • Han</div>
-                            </div>
-                        </div>
-
-                        <div class="library-item">
-                            <img
-                                src="placeholder.svg?height=48&width=48"
-                                alt="Thùy Chi"
-                                class="item-image"
-                            />
-                            <div class="item-info">
-                                <div class="item-title">Thùy Chi</div>
-                                <div class="item-subtitle">Artist</div>
-                            </div>
-                        </div>
+                        <ul class="library-content-folder">
+                            <li
+                                class="library-play-list"
+                                data-index="${item.id}"
+                            >
+                                <img src="" alt="" />
+                            </li>
+                            <li
+                                class="library-play-list"
+                                data-index="${item.id}"
+                            >
+                                <img src="" alt="" />
+                            </li>
+                            <li
+                                class="library-play-list"
+                                data-index="${item.id}"
+                            >
+                                <img src="" alt="" />
+                            </li>
+                        </ul>
                     </div>
                 </nav>
             </aside>
@@ -449,6 +414,18 @@
                         <form class="auth-form-content">
                             <div class="form-group">
                                 <input
+                                    type="name"
+                                    placeholder="User name"
+                                    class="form-input"
+                                    id="signupName"
+                                />
+                                <div class="error-message error-name">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>Please enter a valid name </span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <input
                                     type="email"
                                     placeholder="Email address"
                                     class="form-input"
@@ -464,12 +441,17 @@
                             </div>
 
                             <div class="form-group">
-                                <input
-                                    type="password"
-                                    placeholder="Password"
-                                    class="form-input"
-                                    id="signupPassword"
-                                />
+                                <div class="wrap-form-group">
+                                    <input
+                                        type="password"
+                                        placeholder="Password"
+                                        class="form-input"
+                                        id="signupPassword"
+                                    />
+                                    <i
+                                        class="fa-solid fa-eye-slash icon-password"
+                                    ></i>
+                                </div>
                                 <div class="error-message error-password">
                                     <i class="fas fa-info-circle"></i>
                                     <span
@@ -514,12 +496,17 @@
                             </div>
 
                             <div class="form-group">
-                                <input
-                                    type="password"
-                                    placeholder="Password"
-                                    class="form-input"
-                                    id="loginPassword"
-                                />
+                                <div class="wrap-form-group">
+                                    <input
+                                        type="password"
+                                        placeholder="Password"
+                                        class="form-input"
+                                        id="loginPassword"
+                                    />
+                                    <i
+                                        class="fa-solid fa-eye-slash icon-password"
+                                    ></i>
+                                </div>
                                 <div class="error-message error-password">
                                     <i class="fas fa-info-circle"></i>
                                     <span>Please enter your password</span>

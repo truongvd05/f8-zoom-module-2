@@ -12,17 +12,85 @@ const popularList = $(".track-list");
 const listArtists = $(".nav-tabs");
 const playList = $(".js-player-list");
 const playerLeft = $(".player-left");
+const iconUserView = $(".user-view");
+
+let playListsCache = null;
+
+// get data playlist
+async function getPlaylists() {
+    if (playListsCache) {
+        return playListsCache; // dùng lại dữ liệu đã có
+    }
+    const { playlists } = await httpRequest.get("playlists?limit=20&offset=0");
+    playListsCache = playlists;
+    return playlists;
+}
+
+// render compact
+function renderCompact(list) {
+    const html = list
+        .map((item) => {
+            return `<li class="library-item library-play-list" data-index="${
+                item.id
+            }">
+                                ${escapeHTML(item.name)}
+                            </li>
+                        `;
+        })
+        .join("");
+    const ul = document.createElement("ul");
+    ul.innerHTML = html;
+    library.innerHTML = "";
+    library.appendChild(ul);
+}
+
+function renderGrid(list) {
+    const html = list
+        .map((item) => {
+            return `<li
+                        class="library-play-list"
+                        data-index="${item.id}"
+                    >
+                        <img src="${escapeHTML(item.image_url)}" alt="" />
+                    </li>`;
+        })
+        .join("");
+    const ul = document.createElement("ul");
+    ul.innerHTML = html;
+    ul.className = "library-content-folder";
+    library.innerHTML = "";
+    library.appendChild(ul);
+}
+// render click follow icon
+function renderPro() {
+    iconUserView.addEventListener("click", async function (e) {
+        const playlists = await getPlaylists();
+        console.log(playlists);
+
+        if (e.target.closest(".icon-compact")) {
+            renderCompact(playlists);
+        }
+        if (e.target.closest(".icon-default")) {
+            library.innerHTML = "";
+            renderPlayerList();
+        }
+        if (e.target.closest(".icon-gird")) {
+            renderGrid(playlists);
+        }
+    });
+}
 
 function renderPlayList() {
     playList.addEventListener("click", async function (e) {
         const { playlists } = await httpRequest.get(
             "playlists?limit=20&offset=0"
         );
+
         const html = playlists
-            .map((item, index) => {
+            .map((item) => {
                 return `<div class="library-item library-play-list" data-index="${
                     item.id
-                }"">
+                }">
                         <div class="item-icon liked-songs">
                             <i class="fas fa-heart"></i>
                         </div>
@@ -101,7 +169,7 @@ function sum(num) {
 }
 
 export function renderUser(user, element) {
-    element.innerHTML = `${escapeHTML(user.display_name)}`;
+    element.innerHTML = `${escapeHTML(user.username)}`;
 }
 // handle click artiest
 function artists() {
@@ -188,13 +256,11 @@ export async function renderHero1(idArtist) {
                 </div>`;
     element.innerHTML = html;
 }
-async function renderPlayerList() {
+export async function renderPlayerList() {
     const { playlists } = await httpRequest.get("playlists?limit=20&offset=0");
-    console.log(playList);
-
     const html = playlists
         .map((item, index) => {
-            return `<div class="library-item library-play-list" data-index="${index}"">
+            return `<div class="library-item library-play-list" data-index="${index}">
                         <div class="item-icon liked-songs">
                             <i class="fas fa-heart"></i>
                         </div>
@@ -234,5 +300,6 @@ export async function userRender() {
 export async function initPopularSong() {
     artists();
     renderPlayList();
-    renderPlayerList;
+    renderPlayerList();
+    renderPro();
 }

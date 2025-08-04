@@ -88,29 +88,70 @@ document.addEventListener("DOMContentLoaded", function () {
     // Prevent form submission for demo purposes
     const signUp = signupForm.querySelector(".auth-form-content");
     const login = loginForm.querySelector(".auth-form-content");
-    // handle show erro messgae
-    function handleErrorMessage(email, password, message) {
+
+    function handleMessageRegister(email, password, name = null, message) {
         const invalidEmail = email.closest(".form-group");
         const invalidPassword = password.closest(".form-group");
+        const invalidName = name.closest(".form-group");
+        invalidEmail.classList.remove("invalid");
+        invalidPassword.classList.remove("invalid");
+        invalidName.classList.remove(".invalid");
+        email.innerHTML = "";
+        password.innerHTML = "";
+        name.innerHTML = "";
+        switch (message.code) {
+            case "EMAIL_EXISTS":
+                invalidEmail.classList.add("invalid");
+                email.innerHTML = `<i class="fas fa-info-circle"></i>
+                        <span
+                        >${escapeHTML(message.message)}</span
+                        >`;
+                break;
+            case "USERNAME_EXISTS":
+                invalidName.classList.add("invalid");
+                name.innerHTML = `<i class="fas fa-info-circle"></i>
+                    <span
+                    >${escapeHTML(message.message)}</span
+                    >`;
+        }
+    }
+    // handle show erro messgae
+    function handleErrorMessage(email, password, name, message) {
+        const invalidEmail = email.closest(".form-group");
+        const invalidPassword = password.closest(".form-group");
+        const invalidName = name.closest(".form-group");
 
         invalidEmail.classList.remove("invalid");
         invalidPassword.classList.remove("invalid");
+        invalidName.classList.remove(".invalid");
+
         email.innerHTML = "";
         password.innerHTML = "";
+        name.innerHTML = "";
+
         message.forEach((item) => {
             if (item.field === "email") {
                 invalidEmail.classList.add("invalid");
                 email.innerHTML = `<i class="fas fa-info-circle"></i>
-                <span
-                >${escapeHTML(item.message)}</span
-                >`;
+                    <span
+                    >${escapeHTML(item.message)}</span
+                    >`;
             }
             if (item.field === "password") {
                 invalidPassword.classList.add("invalid");
                 password.innerHTML = `<i class="fas fa-info-circle"></i>
-                                        <span
-                                            >${escapeHTML(item.message)}</span
-                                        >`;
+                                            <span
+                                                >${escapeHTML(
+                                                    item.message
+                                                )}</span
+                                            >`;
+            }
+            if (item.field === "username") {
+                invalidName.classList.add("invalid");
+                name.innerHTML = `<i class="fas fa-info-circle"></i>
+                    <span
+                    >${escapeHTML(item.message)}</span
+                    >`;
             }
         });
     }
@@ -126,6 +167,37 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log(error);
         }
     });
+    function handleErrorMessageLogin(email, password, message) {
+        const invalidEmail = email.closest(".form-group");
+        const invalidPassword = password.closest(".form-group");
+
+        invalidEmail.classList.remove("invalid");
+        invalidPassword.classList.remove("invalid");
+
+        email.innerHTML = "";
+        password.innerHTML = "";
+
+        message.forEach((item) => {
+            if (item.field === "email") {
+                invalidEmail.classList.add("invalid");
+                email.innerHTML = `<i class="fas fa-info-circle"></i>
+                                            <span
+                                                >${escapeHTML(
+                                                    item.message
+                                                )}</span
+                                            >`;
+            }
+            if (item.field === "password") {
+                invalidPassword.classList.add("invalid");
+                password.innerHTML = `<i class="fas fa-info-circle"></i>
+                                            <span
+                                                >${escapeHTML(
+                                                    item.message
+                                                )}</span
+                                            >`;
+            }
+        });
+    }
     // đăng nhập
     login.addEventListener("submit", async function (e) {
         e.preventDefault();
@@ -135,6 +207,10 @@ document.addEventListener("DOMContentLoaded", function () {
         const errorPassWord = login.querySelector(
             ".error-message.error-password"
         );
+        const invalidEmail = errorGmail.closest(".form-group");
+
+        const invalidPassword = errorPassWord.closest(".form-group");
+
         const created = {
             email,
             password,
@@ -149,16 +225,25 @@ document.addEventListener("DOMContentLoaded", function () {
                 location.reload();
             }, 0);
         } catch (error) {
+            const message = error?.response?.error?.details;
             switch (error?.response?.error?.code) {
                 case "VALIDATION_ERROR":
-                    const message = error?.response?.error?.details;
-                    handleErrorMessage(errorGmail, errorPassWord, message);
+                    handleErrorMessageLogin(errorGmail, errorPassWord, message);
                     break;
                 case "RATE_LIMIT_EXCEEDED":
                     console.log(
                         "Too many authentication attempts, please try again later."
                     );
                     break;
+                case "INVALID_CREDENTIALS":
+                    invalidEmail.classList.remove("invalid");
+                    invalidPassword.classList.add("invalid");
+                    errorPassWord.innerHTML = `<i class="fas fa-info-circle"></i>
+                                            <span
+                                                >${escapeHTML(
+                                                    error.response.error.message
+                                                )}</span
+                                            >`;
                 default:
                     console.log("có lỗi xảy ra");
                     break;
@@ -170,12 +255,15 @@ document.addEventListener("DOMContentLoaded", function () {
         e.preventDefault();
         const email = document.querySelector("#signupEmail").value;
         const password = document.querySelector("#signupPassword").value;
+        const name = document.querySelector("#signupName").value;
+
         const errorGmail = signUp.querySelector(".error-message.error-email");
         const errorPassWord = signUp.querySelector(
             ".error-message.error-password"
         );
+        const errorName = signUp.querySelector(".error-message.error-name");
         const created = {
-            username: "truongvd5",
+            username: name,
             email,
             password,
         };
@@ -187,14 +275,36 @@ document.addEventListener("DOMContentLoaded", function () {
                 location.reload();
             }, 0);
         } catch (error) {
+            const message = error?.response?.error?.details;
+            const message1 = error?.response.error;
             switch (error?.response?.error?.code) {
                 case "VALIDATION_ERROR":
-                    const message = error?.response?.error?.details;
-                    handleErrorMessage(errorGmail, errorPassWord, message);
+                    handleErrorMessage(
+                        errorGmail,
+                        errorPassWord,
+                        errorName,
+                        message
+                    );
                     break;
                 case "RATE_LIMIT_EXCEEDED":
                     console.log(
                         "Too many authentication attempts, please try again later."
+                    );
+                    break;
+                case "EMAIL_EXISTS":
+                    handleMessageRegister(
+                        errorGmail,
+                        errorPassWord,
+                        errorName,
+                        message1
+                    );
+                    break;
+                case "USERNAME_EXISTS":
+                    handleMessageRegister(
+                        errorGmail,
+                        errorPassWord,
+                        errorName,
+                        message1
                     );
                     break;
                 default:

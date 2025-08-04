@@ -9,6 +9,7 @@ import {
     showNotification,
     renderHero,
     renderHero1,
+    renderPlayerList,
 } from "./module.js";
 
 const play = $(".play-btn");
@@ -43,6 +44,34 @@ let isRandom = false;
 let lastVolume = audio.volume;
 let ismoveVolume = false;
 let ismoveBar = false;
+let idArtist = null;
+let idAPlaylist = null;
+
+export async function getTrendingTracks(limit = 20) {
+    const { tracks } = await httpRequest.get(`tracks/trending?limit=${limit}`);
+    return tracks;
+}
+
+const signUp = signupForm.querySelector(".auth-form-content");
+const login = loginForm.querySelector(".auth-form-content");
+
+// show password resgiter
+function showPassWord(container) {
+    const password = $("#signupPassword");
+    container.addEventListener("click", function (e) {
+        const icon = e.target.closest(".icon-password");
+        if (icon) {
+            const password = icon.closest(".form-group").querySelector("input");
+            if (password.type === "password") {
+                password.type = "text";
+                icon.classList.replace("fa-eye-slash", "fa-eye");
+            } else {
+                icon.classList.replace("fa-eye", "fa-eye-slash");
+                password.type = "password";
+            }
+        }
+    });
+}
 // handle click bar
 function handleClickBar() {
     bar.addEventListener("mousedown", (e) => {
@@ -120,7 +149,6 @@ function handleClickSort() {
         if (e.target.closest("i")) {
             const icon = $(".icon-view");
             const className = e.target.className;
-
             icon.className = `${className} icon-view`;
         }
     });
@@ -148,6 +176,7 @@ function handleControlSong() {
             timeEnd.innerHTML = totalSongTime(tracks[currenindex].duration);
             handleTime();
             activeSong(currenindex);
+            renderPlayerLeft(tracks[currenindex]);
         }
         if (e.target.closest(".control-prev")) {
             handelPrevSong(tracks);
@@ -155,6 +184,7 @@ function handleControlSong() {
             timeEnd.innerHTML = totalSongTime(tracks[currenindex].duration);
             handleTime();
             activeSong(currenindex);
+            renderPlayerLeft(tracks[currenindex]);
         }
     });
 }
@@ -172,6 +202,7 @@ function handelPrevSong(tracks) {
     isPlay = true;
     currenindex--;
     currentSong = (currenindex + tracks.length) % tracks.length;
+
     audio.src = tracks[currentSong].audio_url;
     iconPlay.classList.replace("fa-play", "fa-pause");
     audio.play();
@@ -180,6 +211,28 @@ function handelPrevSong(tracks) {
 function handleContextMenu(e) {
     e.preventDefault();
 }
+// context menu
+contexMenuPlayList.addEventListener("click", async function (e) {
+    if (e.target.closest(".playlist-delete")) {
+        try {
+            const res = await httpRequest.del(`playlists/${idAPlaylist}`);
+            renderPlayerList();
+        } catch (error) {
+            const message = error?.response?.error?.message;
+            switch (error?.response?.error?.code) {
+                case "PERMISSION_DENIED":
+                    showNotification(message);
+                    break;
+                case "RATE_LIMIT_EXCEEDED":
+                    showNotification(message);
+                    break;
+                default:
+                    console.log("có lỗi xảy ra");
+                    break;
+            }
+        }
+    }
+});
 contexMenu.addEventListener("contextmenu", handleContextMenu);
 contexMenuPlayList.addEventListener("contextmenu", handleContextMenu);
 // click item artists
@@ -224,8 +277,6 @@ export function removeShowToast() {
 }
 
 function toastOnClick(e) {
-    console.log(123);
-
     if (e.target.closest(".js-player-list") || e.target.closest(".js-artist")) {
         showNotification();
     }
@@ -249,19 +300,23 @@ function handleReload() {
 // handle menu sidebar
 function handleSidebarContextMenu() {
     sidebarContextMenu.addEventListener("contextmenu", function (e) {
-        console.log(123);
         e.preventDefault();
-        if (e.target.closest(".library-artists")) {
+        const artist = e.target.closest(".library-artists");
+        if (artist) {
             const mouseX = e.pageX;
             const mouseY = e.pageY;
+            idArtist = artist.dataset.index;
+
             // Gán vị trí cho phần tử
             contexMenu.style.left = `${mouseX}px`;
             contexMenu.style.top = `${mouseY}px`;
             contexMenu.classList.toggle("show");
         }
-        if (e.target.closest(".library-play-list")) {
+        const playlist = e.target.closest(".library-play-list");
+        if (playlist) {
             const mouseX = e.pageX;
             const mouseY = e.pageY;
+            idAPlaylist = playlist.dataset.index;
 
             // Gán vị trí cho phần tử
             contexMenuPlayList.style.left = `${mouseX}px`;
@@ -294,6 +349,7 @@ function handleView() {
         }
     });
 }
+const librarySearch = $(".library-search");
 
 // handle btn sort
 function handleSort() {
@@ -301,8 +357,17 @@ function handleSort() {
         if (e.target.closest(".sort-btn")) {
             sortBtnList.classList.toggle("show");
         }
+        if (e.target.closest(".search-library-btn")) {
+            librarySearch.classList.add("active");
+            setTimeout(() => {
+                librarySearch.focus();
+            }, 100);
+        }
     });
 }
+librarySearch.addEventListener("blur", () => {
+    librarySearch.classList.remove("active");
+});
 // randomSong
 function handleRandomSong() {
     random.addEventListener("click", function (e) {
@@ -400,6 +465,7 @@ function handlePlay() {
             isPlay = !isPlay;
             iconPlay.classList.replace("fa-play", "fa-pause");
             audio.play();
+            activeSong(currenindex);
             if (audio.readyState > 2) {
                 audio.play();
             }
@@ -412,10 +478,6 @@ function handlePlay() {
     });
 }
 
-export async function getTrendingTracks(limit = 20) {
-    const { tracks } = await httpRequest.get(`tracks/trending?limit=${limit}`);
-    return tracks;
-}
 export async function getArtists() {
     const { artists } = await httpRequest.get("artists");
     return artists;
@@ -467,4 +529,6 @@ export function initControl() {
     handleProgress();
     changeVolume();
     handleClickBar();
+    showPassWord(signUp);
+    showPassWord(login);
 }
