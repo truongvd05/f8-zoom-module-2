@@ -21,20 +21,24 @@
             <div class="wrap-overlay-create">
                 <h1 class="edit-title">Edit details</h1>
                 <div class="wrap-overlay-input">
-                    <form for="input-file">
+                    <label for="input-file">
                         <span class="input-picture"
                             ><i class="fa-solid fa-music"></i
                         ></span>
-                        <input
-                            type="file"
-                            name=""
-                            id="input-file"
-                            accept=".jpg,.jpeg,.png"
-                            hidden
-                        />
-                    </form>
+                    </label>
+                    <input
+                        type="file"
+                        name=""
+                        id="input-file"
+                        accept=".jpg,.jpeg,.png"
+                        hidden
+                    />
                     <div class="wrap-input-overlay">
-                        <input type="text" placeholder="My playlist" />
+                        <input
+                            class="create-name"
+                            type="text"
+                            placeholder="My playlist"
+                        />
                         <textarea
                             class="input-description"
                             id="description"
@@ -232,9 +236,21 @@
                             <p class="monthly-listeners">
                                 1,021,833 monthly listeners
                             </p>
+                            <div>
+                                <button class="fllow-artist">Follow</button>
+                            </div>
                         </div>
                     </section>
 
+                    <section class="artist-card">
+                        <div class="card">
+                            <img class="card-img" src="" alt="" />
+                            <div class="card-info">
+                                <div class="card-title">son tung</div>
+                                <div class="card-subtitle">Artist</div>
+                            </div>
+                        </div>
+                    </section>
                     <div class="section-input">
                         <div class="wrap-input">
                             <div class="labal-input">

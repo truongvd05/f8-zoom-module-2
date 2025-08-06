@@ -4,6 +4,7 @@ import {
     $,
     $$,
     getTrendingTracks,
+    isFolow,
 } from "./module.js";
 import httpRequest from "./httpRequest.js";
 
@@ -13,9 +14,11 @@ const listArtists = $(".nav-tabs");
 const playList = $(".js-player-list");
 const playerLeft = $(".player-left");
 const iconUserView = $(".user-view");
+const card = $(".artist-card");
 
 let playListsCache = null;
-
+// render hero click card
+export function renderCardHero(id) {}
 // get data playlist
 async function getPlaylists() {
     if (playListsCache) {
@@ -64,16 +67,19 @@ function renderGrid(list) {
 // render click follow icon
 function renderPro() {
     iconUserView.addEventListener("click", async function (e) {
+        const active = $(".js-player-list.active");
         const playlists = await getPlaylists();
-        if (e.target.closest(".icon-compact")) {
-            renderCompact(playlists);
-        }
-        if (e.target.closest(".icon-default")) {
-            library.innerHTML = "";
-            renderPlayerList();
-        }
-        if (e.target.closest(".icon-gird")) {
-            renderGrid(playlists);
+        if (active) {
+            if (e.target.closest(".icon-compact")) {
+                renderCompact(playlists);
+            }
+            if (e.target.closest(".icon-default")) {
+                library.innerHTML = "";
+                renderPlayerList();
+            }
+            if (e.target.closest(".icon-gird")) {
+                renderGrid(playlists);
+            }
         }
     });
 }
@@ -83,7 +89,6 @@ function renderPlayList() {
         const { playlists } = await httpRequest.get(
             "playlists?limit=20&offset=0"
         );
-
         const html = playlists
             .map((item) => {
                 return `<div class="library-item library-play-list" data-index="${
@@ -180,6 +185,12 @@ function artists() {
             active.classList.add("active");
         }
         if (e.target.closest(".js-artist")) {
+            // get user follow
+            // const res = await httpRequest.get(
+            //     `users/me/artists?limit=20&offset=0`
+            // );
+            // console.log(res);
+
             const html = artists
                 .map((item, index) => {
                     return `<div class="library-item library-artists" data-index="${escapeHTML(
@@ -202,10 +213,11 @@ function artists() {
     });
 }
 
-export async function renderHero(idArtist) {
+export async function renderHero(id) {
     const element = $(".artist-hero");
-    const res = await httpRequest.get(`artists/${idArtist}`);
-    const html = `<div class="hero-background">
+    const res = await httpRequest.get(`artists/${id}`);
+
+    const html = `<div class="hero-background" >
                     <img
                         src="${escapeHTML(res.background_image_url)}"
                         alt="${res.name} background"
@@ -213,7 +225,7 @@ export async function renderHero(idArtist) {
                     />
                     <div class="hero-overlay"></div>
                 </div>
-                <div class="hero-content">
+                <div class="hero-content" data-index="${res.id}">
                     <div class="verified-badge">
                         <i class="fas fa-check-circle"></i>
                         <span>Verified Artist</span>
@@ -224,16 +236,22 @@ export async function renderHero(idArtist) {
                             res.monthly_listeners.toLocaleString()
                         )} monthly listeners
                     </p>
+                    <div>
+                        <button class="fllow-artist">${
+                            res.is_following ? "Following" : "Follow"
+                        }</button>
+                    </div>
                 </div>`;
     element.innerHTML = html;
 
-    const res1 = await httpRequest.get(`artists/${idArtist}/albums`);
+    // const res1 = await httpRequest.get(`artists/${id}/albums`);
 }
 
 export async function renderHero1(idArtist) {
     const element = $(".artist-hero");
     const res = await httpRequest.get(`playlists/${idArtist}`);
-    const { user } = await httpRequest.get("users/me");
+
+    // const { user } = await httpRequest.get("users/me");
     const html = `<div class="hero-background">
                     <img
                         src="${escapeHTML(res.image_url)}"
@@ -249,10 +267,31 @@ export async function renderHero1(idArtist) {
                     </div>
                     <h1 class="artist-name">${escapeHTML(res.name)}</h1>
                     <p class="monthly-listeners" hiden>
-                        ${escapeHTML(user.username)}
+                        ${escapeHTML(res.user_username)}
                     </p>
                 </div>`;
     element.innerHTML = html;
+}
+
+async function renderCard() {
+    const card = $(".artist-card");
+    const { artists } = await httpRequest.get("artists");
+    console.log(artists);
+
+    const html = artists
+        .map((item, index) => {
+            return `<div class="card" data-index="${item.id}">
+                    <img class="card-img" src="${escapeHTML(
+                        item.image_url
+                    )}" alt="" />
+                    <div class="card-info">
+                        <div class="card-title">${escapeHTML(item.name)}</div>
+                        <div class="card-subtitle">Artist</div>
+                    </div>
+                </div>`;
+        })
+        .join("");
+    card.innerHTML = html;
 }
 export async function renderPlayerList() {
     const { playlists } = await httpRequest.get("playlists?limit=20&offset=0");
@@ -302,4 +341,6 @@ export async function initPopularSong() {
     renderPlayList();
     renderPlayerList();
     renderPro();
+    renderCard();
+    renderCardHero();
 }

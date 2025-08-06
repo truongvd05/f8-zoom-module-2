@@ -50,13 +50,51 @@ let ismoveVolume = false;
 let ismoveBar = false;
 let idArtist = null;
 let idAPlaylist = null;
-
+let idFollow = null;
+export let isFolow = false;
 const sectionControl = $(".artist-controls");
 const sectionPopular = $(".popular-section");
 const sectionAstist = $(".artist-hero");
+const sectionAstistCard = $(".artist-card");
+
 export async function getTrendingTracks(limit = 20) {
     const { tracks } = await httpRequest.get(`tracks/trending?limit=${limit}`);
     return tracks;
+}
+
+// active card
+function handleClickCard() {
+    sectionAstistCard.addEventListener("click", function (e) {
+        const target = e.target.closest(".card");
+        const actived = $$(".card.active")[0];
+        if (!target) return;
+        const id = target.dataset.index;
+        if (target) {
+            if (actived) {
+                actived.classList.remove("active");
+            }
+            renderHero(id);
+            target.classList.add("active");
+        }
+    });
+}
+function handleFollw() {
+    sectionAstist.addEventListener("click", async function (e) {
+        const targetID = e.target.closest(".hero-content");
+        const id = targetID.dataset.index;
+        const target = e.target.closest(".fllow-artist");
+        if (!target) return;
+        if (target.classList.contains("follow")) {
+            target.classList.remove("follow");
+            target.textContent = "Follow";
+        } else {
+            const res = await httpRequest.put(`artists/${id}/follow`);
+            console.log(res);
+            target.classList.add("follow");
+            target.textContent = "Following";
+        }
+        isFolow = !isFolow;
+    });
 }
 
 // show render
@@ -81,11 +119,13 @@ function createPlaylist() {
             sectionControl.hidden = false;
             sectionPopular.hidden = false;
             sectionAstist.hidden = false;
+            sectionAstistCard.style.display = "grid";
         } else {
             container.classList.add("show");
             sectionControl.hidden = true;
             sectionPopular.hidden = true;
             sectionAstist.hidden = true;
+            sectionAstistCard.style.display = "none";
         }
     });
 }
@@ -124,7 +164,9 @@ function UpdateProgress(e) {
     percent = Math.min(Math.max(percent, 0), 1);
     progressFill.style.width = `${percent}px`;
     progressHandle.style.left = `${percent1}px`;
-    audio.currentTime = percent * audio.duration;
+    if (audio.readyState > 0) {
+        audio.currentTime = percent * audio.duration;
+    }
 }
 // handle move on volume
 function changeVolume() {
@@ -283,6 +325,7 @@ function handleClickItemArtists() {
             }
             item.classList.add("active");
             id = item.dataset.index;
+            idFollow = id;
             renderHero(id);
         }
         const item1 = e.target.closest(".library-play-list");
@@ -571,4 +614,6 @@ export function initControl() {
     showPassWord(login);
     createPlaylist();
     addPlaylist();
+    handleFollw();
+    handleClickCard();
 }

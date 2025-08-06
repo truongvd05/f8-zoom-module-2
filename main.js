@@ -9,6 +9,7 @@ import {
     userRender,
     showToast,
     removeShowToast,
+    renderPlayerList,
 } from "./ultis/module.js";
 
 // Auth Modal Functionality
@@ -22,6 +23,44 @@ document.addEventListener("DOMContentLoaded", function () {
     const loginForm = document.getElementById("loginForm");
     const showLoginBtn = document.getElementById("showLogin");
     const showSignupBtn = document.getElementById("showSignup");
+    const createPlaylist = $(".overlay-create");
+    const inputImg = document.getElementById("input-file");
+
+    createPlaylist.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const file = inputImg.files[0];
+        const createDescription = $(".input-description").value;
+        const createName = $(".create-name").value;
+
+        let url = null;
+        if (file) {
+            const formData = new FormData();
+            formData.append("file", file);
+            const res = await fetch(
+                `https://spotify.f8team.dev/api/upload/cover`,
+                {
+                    method: "POST",
+                    body: formData,
+                }
+            );
+            console.log(res);
+
+            if (res.ok) {
+                url = res.url;
+            }
+        } else {
+            console.log("chưa chọn file");
+        }
+        // const data = {
+        //     name: createName,
+        //     description: createDescription,
+        //     image_url: url,
+        // };
+        // const res = await httpRequest.post("playlists", data);
+        // console.log(res);
+        renderPlayerList();
+        this.classList.remove("show");
+    });
 
     // Function to show signup form
     function showSignupForm() {
@@ -85,6 +124,7 @@ document.addEventListener("DOMContentLoaded", function () {
     showSignupBtn.addEventListener("click", function () {
         showSignupForm();
     });
+
     // Prevent form submission for demo purposes
     const signUp = signupForm.querySelector(".auth-form-content");
     const login = loginForm.querySelector(".auth-form-content");
@@ -156,7 +196,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
     // log out
-
     logoutBtn.addEventListener("click", async function (e) {
         const token = localStorage.getItem("accessToken");
         try {
