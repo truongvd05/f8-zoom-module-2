@@ -87,6 +87,8 @@ function renderPro() {
 function renderPlayList() {
     playList.addEventListener("click", async function (e) {
         const { playlists } = await httpRequest.get("me/playlists");
+        console.log(playlists);
+
         const html = playlists
             .map((item) => {
                 return `<div class="library-item library-play-list" data-index="${
