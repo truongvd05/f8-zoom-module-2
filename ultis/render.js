@@ -292,7 +292,7 @@ async function renderCard() {
 export async function renderPlayerList() {
     const { playlists } = await httpRequest.get("me/playlists");
     const html = playlists
-        .map((item, index) => {
+        .map((item) => {
             return `<div class="library-item library-play-list" data-index="${
                 item.id
             }"">
