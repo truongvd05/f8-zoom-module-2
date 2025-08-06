@@ -51,13 +51,12 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
             console.log("chưa chọn file");
         }
-        // const data = {
-        //     name: createName,
-        //     description: createDescription,
-        //     image_url: url,
-        // };
-        // const res = await httpRequest.post("playlists", data);
-        // console.log(res);
+        const data = {
+            name: createName,
+            description: createDescription,
+            image_url: url,
+        };
+        const res = await httpRequest.post("playlists", data);
         renderPlayerList();
         this.classList.remove("show");
     });

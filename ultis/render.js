@@ -86,9 +86,7 @@ function renderPro() {
 
 function renderPlayList() {
     playList.addEventListener("click", async function (e) {
-        const { playlists } = await httpRequest.get(
-            "playlists?limit=20&offset=0"
-        );
+        const { playlists } = await httpRequest.get("me/playlists");
         const html = playlists
             .map((item) => {
                 return `<div class="library-item library-play-list" data-index="${
@@ -276,8 +274,6 @@ export async function renderHero1(idArtist) {
 async function renderCard() {
     const card = $(".artist-card");
     const { artists } = await httpRequest.get("artists");
-    console.log(artists);
-
     const html = artists
         .map((item, index) => {
             return `<div class="card" data-index="${item.id}">
@@ -294,7 +290,7 @@ async function renderCard() {
     card.innerHTML = html;
 }
 export async function renderPlayerList() {
-    const { playlists } = await httpRequest.get("playlists?limit=20&offset=0");
+    const { playlists } = await httpRequest.get("me/playlists");
     const html = playlists
         .map((item, index) => {
             return `<div class="library-item library-play-list" data-index="${
