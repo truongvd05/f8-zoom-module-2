@@ -38,6 +38,7 @@ const signUp = signupForm.querySelector(".auth-form-content");
 const login = loginForm.querySelector(".auth-form-content");
 const createBtn = $(".create-btn");
 const labal = $(".labal-input");
+const follow = $(".fllow-artist");
 
 let currenindex = 0;
 let isPlay = false;
@@ -78,7 +79,7 @@ function handleClickCard() {
         }
     });
 }
-function handleFollw() {
+export function handleFollw() {
     sectionAstist.addEventListener("click", async function (e) {
         const targetID = e.target.closest(".hero-content");
         const id = targetID.dataset.index;
@@ -111,7 +112,7 @@ function addPlaylist() {
     // close render
 }
 
-function createPlaylist() {
+export function createPlaylist() {
     const container = $(".section-input");
     createBtn.addEventListener("click", function () {
         if (container.classList.contains("show")) {
@@ -346,16 +347,25 @@ function handleClickItemArtists() {
 // when user not loggin
 export function showToast() {
     navtabs.addEventListener("click", toastOnClick);
+    createBtn.addEventListener("click", toastOnClick);
+    follow.addEventListener("click", toastOnClick);
 }
 
 export function removeShowToast() {
     if (navtabs) {
         navtabs.removeEventListener("click", toastOnClick);
+        createBtn.removeEventListener("click", toastOnClick);
+        follow.removeEventListener("click", toastOnClick);
     }
 }
 
 function toastOnClick(e) {
-    if (e.target.closest(".js-player-list") || e.target.closest(".js-artist")) {
+    if (
+        e.target.closest(".js-player-list") ||
+        e.target.closest(".js-artist") ||
+        e.target.closest(".create-btn") ||
+        e.target.closest(".fllow-artist")
+    ) {
         showNotification();
     }
 }
@@ -612,8 +622,6 @@ export function initControl() {
     handleClickBar();
     showPassWord(signUp);
     showPassWord(login);
-    createPlaylist();
     addPlaylist();
-    handleFollw();
     handleClickCard();
 }

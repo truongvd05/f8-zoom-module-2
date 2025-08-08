@@ -24,7 +24,7 @@ async function getPlaylists() {
     if (playListsCache) {
         return playListsCache; // dùng lại dữ liệu đã có
     }
-    const { playlists } = await httpRequest.get("playlists?limit=20&offset=0");
+    const { playlists } = await httpRequest.get("me/playlists");
     playListsCache = playlists;
     return playlists;
 }
@@ -54,7 +54,9 @@ function renderGrid(list) {
                         class="library-play-list"
                         data-index="${item.id}"
                     >
-                        <img src="${escapeHTML(item.image_url)}" alt="" />
+                        <img src="${escapeHTML(
+                            item.image_url
+                        )}" alt="" onerror="this.onerror=null; this.src='https://demofree.sirv.com/nope-not-here.jpg';"/>
                     </li>`;
         })
         .join("");
@@ -220,7 +222,7 @@ export async function renderHero(id) {
     const html = `<div class="hero-background" >
                     <img
                         src="${escapeHTML(res.background_image_url)}"
-                        alt="${res.name} background"
+                        alt="background img"
                         class="hero-image"
                     />
                     <div class="hero-overlay"></div>

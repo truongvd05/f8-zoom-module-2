@@ -10,6 +10,8 @@ import {
     showToast,
     removeShowToast,
     renderPlayerList,
+    createPlaylist,
+    handleFollw,
 } from "./ultis/module.js";
 
 // Auth Modal Functionality
@@ -416,5 +418,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         renderUser(user, userName);
         initPopularSong();
         removeShowToast();
+        createPlaylist();
+        handleFollw();
     }
 });
