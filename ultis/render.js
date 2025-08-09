@@ -4,7 +4,6 @@ import {
     $,
     $$,
     getTrendingTracks,
-    isFolow,
 } from "./module.js";
 import httpRequest from "./httpRequest.js";
 
@@ -14,7 +13,6 @@ const listArtists = $(".nav-tabs");
 const playList = $(".js-player-list");
 const playerLeft = $(".player-left");
 const iconUserView = $(".user-view");
-const card = $(".artist-card");
 
 let playListsCache = null;
 // render hero click card
@@ -22,7 +20,7 @@ export function renderCardHero(id) {}
 // get data playlist
 async function getPlaylists() {
     if (playListsCache) {
-        return playListsCache; // dùng lại dữ liệu đã có
+        return playListsCache;
     }
     const { playlists } = await httpRequest.get("me/playlists");
     playListsCache = playlists;
@@ -89,8 +87,6 @@ function renderPro() {
 function renderPlayList() {
     playList.addEventListener("click", async function (e) {
         const { playlists } = await httpRequest.get("me/playlists");
-        console.log(playlists);
-
         const html = playlists
             .map((item) => {
                 return `<div class="library-item library-play-list" data-index="${
@@ -117,9 +113,14 @@ function renderPlayList() {
     });
 }
 async function renderPopularSong(tracks, container) {
+    const saved = JSON.parse(localStorage.getItem("listener"));
+    const currenindex = Number(saved?.index) ?? 0;
+
     const html = tracks
         .map((item, index) => {
-            return `<div class="track-item" data-index="${index}">
+            const isCurrentSong = index === currenindex;
+            return `<div class="track-item ${isCurrentSong ? "playing" : ""}"
+             data-index="${index}" data-id="${item.id}">
                         <div class="track-number">${sum(index)}</div>
                                 <div class="track-image">
                                     <img
@@ -319,18 +320,7 @@ export async function renderPlayerList() {
         .join("");
     library.innerHTML = html;
 }
-
-function showNotfication() {
-    const toast = document.getElementById("toast");
-    toast.textContent = message;
-    toast.classList.add("show");
-
-    setTimeout(() => {
-        toast.classList.remove("show");
-    }, 2000); // 2 giây
-}
-
-// get trendingtracks
+renderPopularSong;
 export async function userRender() {
     const listTracks = await getTrendingTracks();
     renderPopularSong(listTracks, popularList);

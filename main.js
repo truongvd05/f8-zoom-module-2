@@ -12,6 +12,7 @@ import {
     renderPlayerList,
     createPlaylist,
     handleFollw,
+    handleGetState,
 } from "./ultis/module.js";
 
 // Auth Modal Functionality
@@ -401,6 +402,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const userName = document.querySelector(".user-name");
     const unserMenu = document.querySelector(".user-menu");
     let user = null;
+    handleGetState();
     initControl();
     userRender();
     showToast();
