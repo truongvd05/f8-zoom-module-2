@@ -41,6 +41,7 @@ const labal = $(".labal-input");
 const follow = $(".fllow-artist");
 const timeStart = $(".js-time-start");
 const trackList = $(".track-list");
+const scroll = $(".content-wrapper");
 
 let currenindex = 0;
 let currenid = null;
@@ -86,18 +87,20 @@ async function handleParam() {
     const saveUrl = `${location.pathname}${Url}${location.hash}`;
     history.replaceState(null, "", saveUrl);
 }
+
 export async function getTrendingTracks(limit = 20) {
     const { tracks } = await httpRequest.get(`tracks/trending?limit=${limit}`);
     return tracks;
 }
 
+// /handle scroll
 function handleScroll() {
     const songs = $$(".track-item");
     const currenSong = songs[currenindex];
-    const offset = 500;
+    const offset = 300;
     const rect = currenSong.getBoundingClientRect();
-    window.scrollTo({
-        top: window.scrollY + rect.top - offset,
+    scroll.scrollTo({
+        top: scroll.scrollTop + rect.top - offset,
         behavior: "smooth",
     });
 }
@@ -114,6 +117,7 @@ export async function handleGetState() {
         const res = await httpRequest.get(`tracks/${currenid}`);
         audio.src = res.audio_url;
         audio.currentTime = time;
+        timeEnd.innerText = totalSongTime(res.duration);
         handleProgress();
         isLoop = saved.loop;
         handleTime(time);
@@ -330,7 +334,6 @@ function handleControlSong() {
             handlNextSong(tracks);
             handleProgress();
             timeEnd.innerHTML = totalSongTime(tracks[currenindex].duration);
-            handleScroll();
             handleTime();
             activeSong(currenindex);
             renderPlayerLeft(tracks[currenindex]);
@@ -339,6 +342,7 @@ function handleControlSong() {
             handelPrevSong(tracks);
             handleProgress();
             timeEnd.innerHTML = totalSongTime(tracks[currenindex].duration);
+
             handleTime();
             activeSong(currenindex);
             renderPlayerLeft(tracks[currenindex]);
@@ -356,6 +360,7 @@ function handlNextSong(tracks) {
     audio.src = tracks[currenindex].audio_url;
     iconPlay.classList.replace("fa-play", "fa-pause");
     audio.play();
+    handleScroll();
 }
 // handle prve song
 function handelPrevSong(tracks) {
@@ -368,6 +373,7 @@ function handelPrevSong(tracks) {
     audio.src = tracks[currenindex].audio_url;
     iconPlay.classList.replace("fa-play", "fa-pause");
     audio.play();
+    handleScroll();
 }
 
 function handleContextMenu(e) {
@@ -545,15 +551,16 @@ librarySearch.addEventListener("blur", () => {
 });
 // randomSong
 function handleRandomSong() {
-    random.addEventListener("click", function (e) {
-        if (!isRandom) {
-            isRandom = !isRandom;
-            this.classList.add("active");
-        } else {
-            isRandom = !isRandom;
-            this.classList.remove("active");
-        }
-    });
+    random.addEventListener("click", randomSong);
+}
+// function random
+function randomSong() {
+    if (!isRandom) {
+        random.classList.add("active");
+    } else {
+        random.classList.remove("active");
+    }
+    isRandom = !isRandom;
 }
 // update volume click icon
 function updateVolumeUI(volumePercent) {
@@ -568,7 +575,6 @@ function handleVolume() {
     volumeContaine.addEventListener("click", function (e) {
         const target = e.target.closest(".js-volume");
         lastVolume = audio.volume || 0.5;
-
         if (target) {
             target.classList.toggle("mute");
         }
@@ -623,15 +629,15 @@ function handleLoop() {
 
 // loop song
 function handleLoopSong() {
-    loop.addEventListener("click", function (e) {
-        isLoop = !isLoop;
+    loop.addEventListener("click", loopsong);
+}
 
-        // Toggle class active
-        this.classList.toggle("active", isLoop);
-
-        // Bật/tắt loop audio
-        audio.loop = isLoop;
-    });
+function loopsong() {
+    isLoop = !isLoop;
+    // Toggle class active
+    loop.classList.toggle("active", isLoop);
+    // Bật/tắt loop audio
+    audio.loop = isLoop;
 }
 
 // play song
@@ -688,6 +694,8 @@ async function clickPopularSong() {
 async function handleKeyDown() {
     const tracks = await getTrendingTracks();
     document.addEventListener("keydown", async function (e) {
+        if (["input", "textarea"].includes(e.target.tagName.toLowerCase()))
+            return;
         switch (e.code) {
             case "Space":
                 e.preventDefault();
@@ -703,10 +711,17 @@ async function handleKeyDown() {
                 break;
             case "ArrowUp":
                 e.preventDefault();
-
                 break;
             case "ArrowDown":
                 e.preventDefault();
+                break;
+            case "KeyL":
+                e.preventDefault();
+                loopsong();
+                break;
+            case "KeyR":
+                e.preventDefault();
+                randomSong();
                 break;
         }
     });

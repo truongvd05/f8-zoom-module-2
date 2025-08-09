@@ -408,6 +408,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     showToast();
     try {
         const res = await httpRequest.get("users/me");
+        console.log(res);
+
         user = res.user;
     } catch {
         authButton.classList.add("show");
