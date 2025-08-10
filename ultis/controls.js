@@ -449,6 +449,7 @@ function handleContextMenu(e) {
 }
 // context menu
 contexMenuPlayList.addEventListener("click", async function (e) {
+    const target = $(".section-input.show");
     if (e.target.closest(".playlist-delete")) {
         try {
             const res = await httpRequest.del(`playlists/${idAPlaylist}`);
@@ -467,6 +468,14 @@ contexMenuPlayList.addEventListener("click", async function (e) {
                     break;
             }
         }
+    }
+    // tắt khi người dùng xóa playlist mà không sửa
+    if (target) {
+        target.classList.remove("show");
+        sectionControl.hidden = false;
+        sectionPopular.hidden = false;
+        sectionAstist.hidden = false;
+        sectionAstistCard.style.display = "grid";
     }
 });
 contexMenu.addEventListener("contextmenu", handleContextMenu);
@@ -541,6 +550,7 @@ function handleReload() {
     const home = $(".home-btn");
     const logo = $(".logo");
     function reloadHome() {
+        history.pushState({}, "", window.location.pathname);
         location.reload();
     }
     home.addEventListener("click", reloadHome);

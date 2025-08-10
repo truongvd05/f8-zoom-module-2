@@ -116,12 +116,9 @@ function renderPro() {
                 currentOrder = order;
                 renderCompact(playlists, currentOrder);
             }
-
             // Icon Default
             if (e.target.closest(".icon-default")) {
-                library.innerHTML = "";
                 currentOrder = order;
-
                 renderPlayList(currentOrder);
             }
 
