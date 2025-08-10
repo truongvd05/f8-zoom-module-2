@@ -1314,6 +1314,8 @@
     inset: 0;
     background-color: var(--bg-active);
     z-index: 10;
+    display: flex;
+    flex-direction: column;
 }
 .section-input.show {
     opacity: 1;
@@ -1370,10 +1372,12 @@
 }
 .wrap-input-overlay {
     flex-grow: 2;
-
     display: flex;
     flex-direction: column;
     gap: 10px;
+}
+.create-name,.input-description {
+    color: white;
 }
 .wrap-input-overlay > * {
     padding: 2px 5px 2px 10px;
@@ -1437,4 +1441,17 @@
 }
 .card.active {
     background-color: var(--bg-active);
+}
+
+.close-form {
+    margin-right: 10px;
+    display: flex;
+    margin-left: auto;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s linear;
+}
+
+.close-form:hover {
+    transform: scale(1.1);
 }

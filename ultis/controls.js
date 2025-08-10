@@ -10,6 +10,7 @@ import {
     renderHero,
     renderHero1,
     renderPlayerList,
+    createList,
 } from "./module.js";
 
 const play = $(".play-btn");
@@ -194,22 +195,89 @@ function addPlaylist() {
     // close render
 }
 
-export function createPlaylist() {
+const createPlaylist = $(".overlay-create");
+const inputImg = document.getElementById("input-file");
+const closeForm = $(".close-form");
+export function handlecreatePlaylist() {
+    let id = null;
+    let url = null;
     const container = $(".section-input");
-    createBtn.addEventListener("click", function () {
-        if (container.classList.contains("show")) {
-            container.classList.remove("show");
-            sectionControl.hidden = false;
-            sectionPopular.hidden = false;
-            sectionAstist.hidden = false;
-            sectionAstistCard.style.display = "grid";
-        } else {
-            container.classList.add("show");
-            sectionControl.hidden = true;
-            sectionPopular.hidden = true;
-            sectionAstist.hidden = true;
-            sectionAstistCard.style.display = "none";
+    const accessToken = localStorage.getItem("accessToken");
+    const createDescription = $(".input-description").value;
+    const createName = $(".create-name").value;
+    const valueDesctiption = $(".input-description");
+    const valueName = $(".create-name");
+
+    closeForm.addEventListener("click", function (e) {
+        container.classList.remove("show");
+        sectionControl.hidden = false;
+        sectionPopular.hidden = false;
+        sectionAstist.hidden = false;
+        sectionAstistCard.style.display = "grid";
+    });
+    createBtn.addEventListener("click", async function () {
+        const data = {
+            name: "My New Playlist",
+            description: "Playlist description",
+            is_public: true,
+            cover_image_url: "https://example.com/playlist-cover.jpg",
+        };
+        const res = await httpRequest.post("playlists", data);
+        valueDesctiption.value = res.playlist.description;
+        valueName.value = res.playlist.name;
+        id = await createList();
+        container.classList.add("show");
+        sectionControl.hidden = true;
+        sectionPopular.hidden = true;
+        sectionAstist.hidden = true;
+        sectionAstistCard.style.display = "none";
+        renderPlayerList();
+    });
+
+    // get url img
+    inputImg.addEventListener("change", async function (e) {
+        const file = e.target.files[0];
+        const formData = new FormData();
+        if (!file) return;
+        formData.append("cover", file);
+        try {
+            const res = await fetch(
+                `https://spotify.f8team.dev/api/upload/playlist/${id}/cover`,
+                {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                }
+            );
+            if (!res.ok) {
+                throw new Error(`Upload thất bại: ${res.status}`);
+            }
+            const data = await res.json();
+            console.log("Upload thành công:", data);
+            url = `https://spotify.f8team.dev${data.file.url}`;
+            console.log(url);
+        } catch (error) {
+            console.log(error);
         }
+    });
+    createPlaylist.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const data = {
+            name: createName ? "Default" : valueName.value,
+            description: createDescription ? "Default" : valueDesctiption.value,
+            image_url: url,
+        };
+
+        const res = await httpRequest.put(`playlists/${id}`, data);
+        renderPlayerList();
+        this.classList.remove("show");
+        container.classList.remove("show");
+        sectionControl.hidden = false;
+        sectionPopular.hidden = false;
+        sectionAstist.hidden = false;
+        sectionAstistCard.style.display = "grid";
     });
 }
 

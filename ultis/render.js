@@ -15,6 +15,24 @@ const playerLeft = $(".player-left");
 const iconUserView = $(".user-view");
 
 let playListsCache = null;
+let currentOrder = "asc";
+
+export async function createList() {
+    const myplaylist = $(".my-playlist");
+    const { playlists } = await httpRequest.get("me/playlists");
+    const latest = playlists.sort(
+        (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
+    )[0];
+    myplaylist.innerText = latest.name;
+    const id = latest.id;
+    return id;
+}
+// sắp xếp playlist theo thứ tự mới nhất
+export async function handleArrangeLatest() {
+    const { playlists } = await httpRequest.get("me/playlists");
+    playlists.sort((a, b) => new Date(b.added_at) - new Date(a.added_at));
+    return playlists;
+}
 // render hero click card
 export function renderCardHero(id) {}
 // get data playlist
@@ -28,7 +46,16 @@ async function getPlaylists() {
 }
 
 // render compact
-function renderCompact(list) {
+function renderCompact(list, order = "desc") {
+    list.sort((a, b) => {
+        if (order === "asc") {
+            // Longest time
+            return new Date(a.updated_at) - new Date(b.updated_at);
+        } else {
+            // latest
+            return new Date(b.updated_at) - new Date(a.updated_at);
+        }
+    });
     const html = list
         .map((item) => {
             return `<li class="library-item library-play-list" data-index="${
@@ -45,7 +72,16 @@ function renderCompact(list) {
     library.appendChild(ul);
 }
 
-function renderGrid(list) {
+function renderGrid(list, order = "desc") {
+    list.sort((a, b) => {
+        if (order === "asc") {
+            // Longest time
+            return new Date(a.updated_at) - new Date(b.updated_at);
+        } else {
+            // latest
+            return new Date(b.updated_at) - new Date(a.updated_at);
+        }
+    });
     const html = list
         .map((item) => {
             return `<li
@@ -64,34 +100,66 @@ function renderGrid(list) {
     library.innerHTML = "";
     library.appendChild(ul);
 }
+
+// togget oder
+
 // render click follow icon
 function renderPro() {
     iconUserView.addEventListener("click", async function (e) {
         const active = $(".js-player-list.active");
+        const active1 = $(".recents.active");
         const playlists = await getPlaylists();
+        let order = active1 ? "desc" : "asc";
         if (active) {
+            // Icon Compact
             if (e.target.closest(".icon-compact")) {
-                renderCompact(playlists);
+                currentOrder = order;
+                renderCompact(playlists, currentOrder);
             }
+
+            // Icon Default
             if (e.target.closest(".icon-default")) {
                 library.innerHTML = "";
-                renderPlayerList();
+                currentOrder = order;
+
+                renderPlayList(currentOrder);
             }
+
+            // Icon Grid
             if (e.target.closest(".icon-gird")) {
-                renderGrid(playlists);
+                currentOrder = order;
+                renderGrid(playlists, currentOrder);
             }
         }
     });
 }
+function renderSortBy() {
+    const target = $(".sort-btn-list");
+    target.addEventListener("click", async function (e) {
+        const active = $(".js-player-list.active");
+        const active1 = $(".recents.active");
+    });
+    playList.addEventListener("click", function (e) {
+        renderPlayList(currentOrder);
+    });
+}
 
-function renderPlayList() {
-    playList.addEventListener("click", async function (e) {
-        const { playlists } = await httpRequest.get("me/playlists");
-        const html = playlists
-            .map((item) => {
-                return `<div class="library-item library-play-list" data-index="${
-                    item.id
-                }">
+async function renderPlayList(order = "desc") {
+    const { playlists } = await httpRequest.get("me/playlists");
+    playlists.sort((a, b) => {
+        if (order === "asc") {
+            // Longest time
+            return new Date(a.updated_at) - new Date(b.updated_at);
+        } else {
+            // latest
+            return new Date(b.updated_at) - new Date(a.updated_at);
+        }
+    });
+    const html = playlists
+        .map((item) => {
+            return `<div class="library-item library-play-list" data-index="${
+                item.id
+            }">
                         <div class="item-icon liked-songs">
                             <i class="fas fa-heart"></i>
                         </div>
@@ -107,11 +175,11 @@ function renderPlayList() {
                             </div>
                         </div>
                     </div>`;
-            })
-            .join("");
-        library.innerHTML = html;
-    });
+        })
+        .join("");
+    library.innerHTML = html;
 }
+
 async function renderPopularSong(tracks, container) {
     const saved = JSON.parse(localStorage.getItem("listener"));
     const currenindex = Number(saved?.index) ?? 0;
@@ -328,9 +396,9 @@ export async function userRender() {
 
 export async function initPopularSong() {
     artists();
-    renderPlayList();
     renderPlayerList();
     renderPro();
     renderCard();
     renderCardHero();
+    renderSortBy();
 }
