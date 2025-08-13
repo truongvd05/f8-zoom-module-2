@@ -11,6 +11,9 @@ import {
     renderHero1,
     renderPlayerList,
     createList,
+    getPlaylists,
+    getArtists,
+    renderArtists,
 } from "./module.js";
 
 const play = $(".play-btn");
@@ -43,6 +46,7 @@ const follow = $(".fllow-artist");
 const timeStart = $(".js-time-start");
 const trackList = $(".track-list");
 const scroll = $(".content-wrapper");
+const searchLibrary = $(".library-search");
 
 let currenindex = 0;
 let currenid = null;
@@ -65,6 +69,27 @@ const sectionAstistCard = $(".artist-card");
 const params = new URLSearchParams(location.search);
 let trackCache = null;
 
+function handleSearch() {
+    searchLibrary.addEventListener("input", async function (e) {
+        const input = searchLibrary.value.trim().toLowerCase();
+        const playlist = $(".js-player-list.active");
+        const artists = $(".js-artist.active");
+        if (playlist) {
+            const res = await getPlaylists();
+            const filter = res.filter((item) => {
+                return item.name.toLowerCase().includes(input);
+            });
+            renderPlayerList(filter);
+        }
+        if (artists) {
+            const res = await getArtists();
+            const filter = res.filter((item) => {
+                return item.name.toLowerCase().includes(input);
+            });
+            renderArtists(filter);
+        }
+    });
+}
 async function getTracks(limit = 20) {
     if (trackCache) {
         return trackCache;
@@ -401,7 +426,7 @@ function handleControlSong() {
         if (e.target.closest(".next-btn")) {
             handlNextSong(tracks);
             handleProgress();
-            timeEnd.innerHTML = totalSongTime(tracks[currenindex].duration);
+            timeEnd.innerText = totalSongTime(tracks[currenindex].duration);
             handleTime();
             activeSong(currenindex);
             renderPlayerLeft(tracks[currenindex]);
@@ -409,7 +434,7 @@ function handleControlSong() {
         if (e.target.closest(".control-prev")) {
             handelPrevSong(tracks);
             handleProgress();
-            timeEnd.innerHTML = totalSongTime(tracks[currenindex].duration);
+            timeEnd.innerText = totalSongTime(tracks[currenindex].duration);
 
             handleTime();
             activeSong(currenindex);
@@ -419,16 +444,20 @@ function handleControlSong() {
 }
 // handle next Song
 function handlNextSong(tracks) {
-    handleParam();
     isPlay = true;
+    if (isRandom) {
+        handleSong();
+        return;
+    }
+    handleParam();
     currenindex++;
     currenindex = (currenindex + tracks.length) % tracks.length;
     activeSong(currenindex);
     currenid = tracks[currenindex].id;
     audio.src = tracks[currenindex].audio_url;
     iconPlay.classList.replace("fa-play", "fa-pause");
-    audio.play();
     handleScroll();
+    audio.play();
 }
 // handle prve song
 function handelPrevSong(tracks) {
@@ -631,6 +660,25 @@ librarySearch.addEventListener("blur", () => {
 function handleRandomSong() {
     random.addEventListener("click", randomSong);
 }
+async function handleSong() {
+    const lastRandom = currenindex;
+    const tracks = await getTrendingTracks();
+    if (tracks.length !== 1) {
+        do {
+            currenindex = Math.floor(Math.random() * tracks.length);
+        } while (currenindex === lastRandom);
+        currenid = tracks[currenindex].id;
+        timeEnd.innerText = totalSongTime(tracks[currenindex].duration);
+        audio.src = tracks[currenindex].audio_url;
+        activeSong(currenindex);
+        handleScroll();
+        handleParam();
+        iconPlay.classList.replace("fa-play", "fa-pause");
+        if (isPlay && audio.readyState > 2) {
+            audio.play();
+        }
+    }
+}
 // function random
 function randomSong() {
     if (!isRandom) {
@@ -678,7 +726,7 @@ function handleBtnHuge() {
         isPlay = true;
         activeSong(currenindex);
         iconPlay.classList.replace("fa-play", "fa-pause");
-        timeEnd.innerHTML = totalSongTime(tracks[currenindex].duration);
+        timeEnd.innerText = totalSongTime(tracks[currenindex].duration);
         handleTime();
     });
 }
@@ -689,6 +737,10 @@ audio.addEventListener("canplay", () => {
 });
 audio.addEventListener("ended", async () => {
     const tracks = await getTrendingTracks();
+    if (isRandom) {
+        handleSong();
+        return;
+    }
     if (isLoop) {
         audio.loop = isLoop;
     } else {
@@ -741,11 +793,6 @@ function playDefault(play) {
     isPlay = !isPlay;
 }
 
-export async function getArtists() {
-    const { artists } = await httpRequest.get("artists");
-    return artists;
-}
-
 async function clickPopularSong() {
     const tracks = await getTrendingTracks();
     const list = $(".track-list");
@@ -762,7 +809,7 @@ async function clickPopularSong() {
         isPlay = true;
         iconPlay.classList.replace("fa-play", "fa-pause");
         activeSong(currenindex);
-        timeEnd.innerHTML = totalSongTime(tracks[index].duration);
+        timeEnd.innerText = totalSongTime(tracks[index].duration);
         handleTime();
         handleParam();
     });
@@ -836,4 +883,5 @@ export function initControl() {
     handleKeyDown();
     handleParam();
     handleURL();
+    handleSearch();
 }

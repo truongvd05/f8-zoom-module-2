@@ -15,6 +15,7 @@ const playerLeft = $(".player-left");
 const iconUserView = $(".user-view");
 
 let playListsCache = null;
+let playArtists = null;
 let currentOrder = "asc";
 
 export async function createList() {
@@ -36,13 +37,23 @@ export async function handleArrangeLatest() {
 // render hero click card
 export function renderCardHero(id) {}
 // get data playlist
-async function getPlaylists() {
+export async function getPlaylists() {
     if (playListsCache) {
         return playListsCache;
     }
     const { playlists } = await httpRequest.get("me/playlists");
     playListsCache = playlists;
     return playlists;
+}
+
+export async function getArtists() {
+    if (playArtists) {
+        return playArtists;
+    }
+    const { artists } = await httpRequest.get("artists");
+
+    playArtists = artists;
+    return artists;
 }
 
 // render compact
@@ -281,6 +292,30 @@ function artists() {
     });
 }
 
+export async function renderArtists(artists = null) {
+    if (!artists) {
+        var { artists } = await httpRequest.get("artists");
+    }
+    const html = artists
+        .map((item, index) => {
+            return `<div class="library-item library-artists" data-index="${escapeHTML(
+                item.id
+            )}">
+                <img
+                    src="${escapeHTML(item.image_url)}"
+                    alt="${escapeHTML(item.name)}"
+                    class="item-image"
+                />
+                <div class="item-info">
+                    <div class="item-title">${escapeHTML(item.name)}</div>
+                    <div class="item-subtitle">Artist</div>
+                </div>
+            </div>`;
+        })
+        .join("");
+    library.innerHTML = html;
+}
+
 export async function renderHero(id) {
     const element = $(".artist-hero");
     const res = await httpRequest.get(`artists/${id}`);
@@ -334,7 +369,7 @@ export async function renderHero1(idArtist) {
                         <span>Verified Artist</span>
                     </div>
                     <h1 class="artist-name">${escapeHTML(res.name)}</h1>
-                    <p class="monthly-listeners" hiden>
+                    <p class="monthly-listeners" hidden>
                         ${escapeHTML(res.user_username)}
                     </p>
                 </div>`;
@@ -359,13 +394,15 @@ async function renderCard() {
         .join("");
     card.innerHTML = html;
 }
-export async function renderPlayerList() {
-    const { playlists } = await httpRequest.get("me/playlists");
+export async function renderPlayerList(playlists = null) {
+    if (!playlists) {
+        var { playlists } = await httpRequest.get("me/playlists");
+    }
     const html = playlists
         .map((item) => {
             return `<div class="library-item library-play-list" data-index="${
                 item.id
-            }"">
+            }">
                         <div class="item-icon liked-songs">
                             <i class="fas fa-heart"></i>
                         </div>
