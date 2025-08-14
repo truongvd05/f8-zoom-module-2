@@ -147,11 +147,10 @@ export async function handleGetState() {
         handleProgress();
         isLoop = saved.loop;
         handleTime(time);
+        renderPlayerLeft(res);
         if (isLoop) {
             loopBtn.classList.add("active");
-            audio.loop = isLoop;
         } else {
-            audio.loop = isLoop;
             loopBtn.classList.remove("active");
         }
     }
@@ -746,6 +745,7 @@ audio.addEventListener("ended", async () => {
     } else {
         audio.loop = isLoop;
         handlNextSong(tracks);
+        renderPlayerLeft(tracks[currenindex]);
         activeSong(currenindex);
     }
 });
