@@ -14,6 +14,7 @@ import {
     getPlaylists,
     getArtists,
     renderArtists,
+    followArtist,
 } from "./module.js";
 
 const play = $(".play-btn");
@@ -186,6 +187,7 @@ function handleClickCard() {
         }
     });
 }
+
 export function handleFollw() {
     sectionAstist.addEventListener("click", async function (e) {
         const targetID = e.target.closest(".hero-content");
@@ -193,11 +195,13 @@ export function handleFollw() {
         if (!target) return;
         const id = targetID.dataset.index;
         if (target.classList.contains("follow")) {
+            const res = await httpRequest.del(`artists/${id}/follow`);
+            followArtist();
             target.classList.remove("follow");
             target.textContent = "Follow";
         } else {
-            const res = await httpRequest.put(`artists/${id}/follow`);
-            console.log(res);
+            const res = await httpRequest.post(`artists/${id}/follow`);
+            followArtist();
             target.classList.add("follow");
             target.textContent = "Following";
         }
@@ -472,9 +476,6 @@ function handelPrevSong(tracks) {
     handleScroll();
 }
 
-function handleContextMenu(e) {
-    e.preventDefault();
-}
 // context menu
 contexMenuPlayList.addEventListener("click", async function (e) {
     const target = $(".section-input.show");
@@ -506,8 +507,25 @@ contexMenuPlayList.addEventListener("click", async function (e) {
         sectionAstistCard.style.display = "grid";
     }
 });
+
+function unfollow() {
+    const un = $(".context-menu");
+    un.addEventListener("click", async function (e) {
+        const target = e.target.closest(".artist-unfollow");
+        if (!target) return;
+        const id = target.dataset.index;
+        const res = await httpRequest.del(`artists/${idArtist}/follow`);
+        followArtist();
+    });
+}
+// context menu
+function handleContextMenu(e) {
+    e.preventDefault();
+}
+document.addEventListener("contextmenu", handleContextMenu);
 contexMenu.addEventListener("contextmenu", handleContextMenu);
 contexMenuPlayList.addEventListener("contextmenu", handleContextMenu);
+
 // click item artists
 function handleClickItemArtists() {
     const library = $(".library-content");
@@ -884,4 +902,5 @@ export function initControl() {
     handleParam();
     handleURL();
     handleSearch();
+    unfollow();
 }

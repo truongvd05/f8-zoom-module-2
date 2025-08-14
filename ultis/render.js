@@ -253,6 +253,43 @@ function sum(num) {
 export function renderUser(user, element) {
     element.innerHTML = `${escapeHTML(user.username)}`;
 }
+
+// filter follow artits
+export async function followArtist() {
+    const { artists } = await httpRequest.get("artists");
+    const following = (
+        await Promise.all(
+            artists.map(async (item) => {
+                try {
+                    const res = await httpRequest.get(`artists/${item.id}`);
+                    if (res.is_following) {
+                        return res;
+                    }
+                } catch (error) {
+                    console.log(error);
+                }
+            })
+        )
+    ).filter(Boolean);
+    const html = following
+        .map((item, index) => {
+            return `<div class="library-item library-artists" data-index="${escapeHTML(
+                item.id
+            )}">
+                <img
+                    src="${escapeHTML(item.image_url)}"
+                    alt="${escapeHTML(item.name)}"
+                    class="item-image"
+                />
+                <div class="item-info">
+                    <div class="item-title">${escapeHTML(item.name)}</div>
+                    <div class="item-subtitle">Artist</div>
+                </div>
+            </div>`;
+        })
+        .join("");
+    library.innerHTML = html;
+}
 // handle click artiest
 function artists() {
     listArtists.addEventListener("click", async function (e) {
@@ -263,14 +300,22 @@ function artists() {
             navActive.classList.remove("active");
             active.classList.add("active");
         }
+        const following = (
+            await Promise.all(
+                artists.map(async (item) => {
+                    try {
+                        const res = await httpRequest.get(`artists/${item.id}`);
+                        if (res.is_following) {
+                            return res;
+                        }
+                    } catch (error) {
+                        console.log(error);
+                    }
+                })
+            )
+        ).filter(Boolean);
         if (e.target.closest(".js-artist")) {
-            // get user follow
-            // const res = await httpRequest.get(
-            //     `users/me/artists?limit=20&offset=0`
-            // );
-            // console.log(res);
-
-            const html = artists
+            const html = following
                 .map((item, index) => {
                     return `<div class="library-item library-artists" data-index="${escapeHTML(
                         item.id
@@ -316,10 +361,9 @@ export async function renderArtists(artists = null) {
     library.innerHTML = html;
 }
 
-export async function renderHero(id) {
+export async function renderHero2() {
     const element = $(".artist-hero");
-    const res = await httpRequest.get(`artists/${id}`);
-
+    const res = await httpRequest.get(`artists`);
     const html = `<div class="hero-background" >
                     <img
                         src="${escapeHTML(res.background_image_url)}"
@@ -340,14 +384,43 @@ export async function renderHero(id) {
                         )} monthly listeners
                     </p>
                     <div>
-                        <button class="fllow-artist">${
-                            res.is_following ? "Following" : "Follow"
-                        }</button>
+                        <button class="fllow-artist ${
+                            res.is_following ? "follow" : ""
+                        }">${res.is_following ? "Following" : "Follow"}</button>
                     </div>
                 </div>`;
     element.innerHTML = html;
+}
 
-    // const res1 = await httpRequest.get(`artists/${id}/albums`);
+export async function renderHero(id) {
+    const element = $(".artist-hero");
+    const res = await httpRequest.get(`artists/${id}`);
+    const html = `<div class="hero-background" >
+                    <img
+                        src="${escapeHTML(res.background_image_url)}"
+                        alt="background img"
+                        class="hero-image"
+                    />
+                    <div class="hero-overlay"></div>
+                </div>
+                <div class="hero-content" data-index="${res.id}">
+                    <div class="verified-badge">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Verified Artist</span>
+                    </div>
+                    <h1 class="artist-name">${escapeHTML(res.name)}</h1>
+                    <p class="monthly-listeners">
+                        ${escapeHTML(
+                            res.monthly_listeners.toLocaleString()
+                        )} monthly listeners
+                    </p>
+                    <div>
+                        <button class="fllow-artist ${
+                            res.is_following ? "follow" : ""
+                        }">${res.is_following ? "Following" : "Follow"}</button>
+                    </div>
+                </div>`;
+    element.innerHTML = html;
 }
 
 export async function renderHero1(idArtist) {
