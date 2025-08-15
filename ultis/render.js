@@ -8,7 +8,6 @@ import {
 import httpRequest from "./httpRequest.js";
 
 const library = $(".library-content");
-const popularList = $(".track-list");
 const listArtists = $(".nav-tabs");
 const playList = $(".js-player-list");
 const playerLeft = $(".player-left");
@@ -119,6 +118,7 @@ function renderPro() {
     iconUserView.addEventListener("click", async function (e) {
         const active = $(".js-player-list.active");
         const active1 = $(".recents.active");
+        const artistActive = $(".js-artist.active");
         const playlists = await getPlaylists();
         let order = active1 ? "desc" : "asc";
         if (active) {
@@ -138,6 +138,8 @@ function renderPro() {
                 currentOrder = order;
                 renderGrid(playlists, currentOrder);
             }
+        }
+        if (artistActive) {
         }
     });
 }
@@ -188,10 +190,10 @@ async function renderPlayList(order = "desc") {
     library.innerHTML = html;
 }
 
-async function renderPopularSong(tracks, container) {
+export async function renderPopularSong(tracks, container) {
     const saved = JSON.parse(localStorage.getItem("listener"));
     const currenindex = Number(saved?.index) ?? 0;
-
+    container.innerHTML = "";
     const html = tracks
         .map((item, index) => {
             const isCurrentSong = index === currenindex;
@@ -200,9 +202,7 @@ async function renderPopularSong(tracks, container) {
                         <div class="track-number">${sum(index)}</div>
                                 <div class="track-image">
                                     <img
-                                        src="${escapeHTML(
-                                            item.album_cover_image_url
-                                        )}"
+                                        src="${escapeHTML(item.image_url)}"
                                         alt="${escapeHTML(item.title)}"
                                     />
                                 </div>
@@ -229,7 +229,7 @@ async function renderPopularSong(tracks, container) {
 
 export function renderPlayerLeft(item) {
     const html = `<img
-                    src="${escapeHTML(item.album_cover_image_url)}"
+                    src="${escapeHTML(item.image_url)}"
                     alt="${escapeHTML(item.title)}"
                     class="player-image"
                 />
@@ -238,7 +238,7 @@ export function renderPlayerLeft(item) {
                         ${escapeHTML(item.title)}
                     </div>
                     <div class="player-artist">${escapeHTML(
-                        item.artist_name
+                        item.album_title
                     )}</div>
                 </div>
                 <button class="add-btn">
@@ -494,11 +494,6 @@ export async function renderPlayerList(playlists = null) {
         })
         .join("");
     library.innerHTML = html;
-}
-renderPopularSong;
-export async function userRender() {
-    const listTracks = await getTrendingTracks();
-    renderPopularSong(listTracks, popularList);
 }
 
 export async function initPopularSong() {

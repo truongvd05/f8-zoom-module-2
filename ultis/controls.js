@@ -15,6 +15,7 @@ import {
     getArtists,
     renderArtists,
     followArtist,
+    renderPopularSong,
 } from "./module.js";
 
 const play = $(".play-btn");
@@ -24,7 +25,6 @@ const btnHuge = $(".play-btn-large");
 const loop = $(".repeat-btn");
 const random = $(".btn-shuffle");
 const timeEnd = $(".js-time-end");
-const volume = $(".volume-container");
 const iconVolume = $(".js-icon-volume");
 const sortBtn = $(".search-library");
 const sortBtnList = $(".sort-btn-list");
@@ -34,7 +34,6 @@ const contexMenu = $(".context-menu");
 const contexMenuPlayList = $(".context-menu-playlist");
 const navtabs = $(".nav-tabs");
 const playCenter = $(".player-center");
-const icomVolume = $(".js-icon-volume");
 const loopBtn = $(".repeat-btn");
 const volumeBar = $(".volume-bar");
 const volumeContaine = $(".js-volume");
@@ -44,10 +43,9 @@ const login = loginForm.querySelector(".auth-form-content");
 const createBtn = $(".create-btn");
 const labal = $(".labal-input");
 const follow = $(".fllow-artist");
-const timeStart = $(".js-time-start");
-const trackList = $(".track-list");
 const scroll = $(".content-wrapper");
 const searchLibrary = $(".library-search");
+const popularList = $(".track-list");
 
 let currenindex = 0;
 let currenid = null;
@@ -60,8 +58,6 @@ let ismoveVolume = false;
 let ismoveBar = false;
 let idArtist = null;
 let idAPlaylist = null;
-let idFollow = null;
-export let isFolow = false;
 const sectionControl = $(".artist-controls");
 const sectionPopular = $(".popular-section");
 const sectionAstist = $(".artist-hero");
@@ -100,21 +96,6 @@ async function getTracks(limit = 20) {
     return trackCache;
 }
 
-// get song form url
-function handleURL() {
-    const song = params.get(trackList.id);
-    currenindex = params?.get(song) ?? currenindex;
-}
-
-// handle param
-async function handleParam() {
-    const tracks = await getTracks();
-    params.set(trackList.id, tracks[currenindex].title);
-    const Url = params.size ? `?${params}` : "";
-    const saveUrl = `${location.pathname}${Url}${location.hash}`;
-    history.replaceState(null, "", saveUrl);
-}
-
 export async function getTrendingTracks(limit = 20) {
     const { tracks } = await httpRequest.get(`tracks/trending?limit=${limit}`);
     return tracks;
@@ -136,7 +117,6 @@ function handleScroll() {
 export async function handleGetState() {
     const saved = JSON.parse(localStorage.getItem("listener"));
     if (saved) {
-        currenindex = saved.index ?? 0;
         const time = saved.time ?? 0;
         const volume = saved.volume ?? 0.5;
         audio.volume = volume;
@@ -170,21 +150,41 @@ export function handleUserState() {
         })
     );
 }
-
+let copyTracks = null;
+async function getMusicData() {
+    try {
+        const { tracks } = await httpRequest.get(
+            `artists/${currenid}/tracks/popular`
+        );
+        copyTracks = JSON.parse(JSON.stringify(tracks));
+    } catch (error) {
+        console.error("Lỗi lấy dữ liệu:", error);
+    }
+    return copyTracks;
+}
 // active card
 function handleClickCard() {
-    sectionAstistCard.addEventListener("click", function (e) {
+    sectionAstistCard.addEventListener("click", async function (e) {
         const target = e.target.closest(".card");
         const actived = $$(".card.active")[0];
+        sectionAstistCard.style.display = "none";
         if (!target) return;
-        const id = target.dataset.index;
+        currenid = target.dataset.index;
+        copyTracks = await getMusicData();
         if (target) {
             if (actived) {
                 actived.classList.remove("active");
             }
-            renderHero(id);
+            renderHero(currenid);
             target.classList.add("active");
         }
+        if (copyTracks < 1) return;
+        renderPlayerLeft(copyTracks[0]);
+        audio.src = copyTracks[0].audio_url;
+        activeSong(copyTracks[0]);
+        renderPopularSong(copyTracks, popularList);
+        sectionPopular.hidden = false;
+        timeEnd.innerText = totalSongTime(copyTracks[0].duration);
     });
 }
 
@@ -205,7 +205,6 @@ export function handleFollw() {
             target.classList.add("follow");
             target.textContent = "Following";
         }
-        isFolow = !isFolow;
     });
 }
 
@@ -423,25 +422,21 @@ function handleProgress() {
 }
 
 //
-function handleControlSong() {
+async function handleControlSong() {
     playCenter.addEventListener("click", async function (e) {
-        const tracks = await getTrendingTracks();
         if (e.target.closest(".next-btn")) {
-            handlNextSong(tracks);
+            handlNextSong(copyTracks);
             handleProgress();
-            timeEnd.innerText = totalSongTime(tracks[currenindex].duration);
-            handleTime();
+            timeEnd.innerText = totalSongTime(copyTracks[currenindex].duration);
             activeSong(currenindex);
-            renderPlayerLeft(tracks[currenindex]);
+            renderPlayerLeft(copyTracks[currenindex]);
         }
         if (e.target.closest(".control-prev")) {
-            handelPrevSong(tracks);
+            handelPrevSong(copyTracks);
             handleProgress();
-            timeEnd.innerText = totalSongTime(tracks[currenindex].duration);
-
-            handleTime();
+            timeEnd.innerText = totalSongTime(copyTracks[currenindex].duration);
             activeSong(currenindex);
-            renderPlayerLeft(tracks[currenindex]);
+            renderPlayerLeft(copyTracks[currenindex]);
         }
     });
 }
@@ -452,7 +447,6 @@ function handlNextSong(tracks) {
         handleSong();
         return;
     }
-    handleParam();
     currenindex++;
     currenindex = (currenindex + tracks.length) % tracks.length;
     activeSong(currenindex);
@@ -464,7 +458,6 @@ function handlNextSong(tracks) {
 }
 // handle prve song
 function handelPrevSong(tracks) {
-    handleParam();
     isPlay = true;
     currenindex--;
     currenindex = (currenindex + tracks.length) % tracks.length;
@@ -529,18 +522,23 @@ contexMenuPlayList.addEventListener("contextmenu", handleContextMenu);
 // click item artists
 function handleClickItemArtists() {
     const library = $(".library-content");
-    library.addEventListener("click", function (e) {
+    library.addEventListener("click", async function (e) {
         const item = e.target.closest(".library-artists");
         const itemActive = document.querySelector(".library-artists.active");
-        let id = null;
+        sectionAstistCard.style.display = "none";
         if (item) {
             if (itemActive) {
                 itemActive.classList.remove("active");
             }
+            currenid = item.dataset.index;
+
+            copyTracks = await getMusicData();
             item.classList.add("active");
-            id = item.dataset.index;
-            idFollow = id;
-            renderHero(id);
+            renderPopularSong(copyTracks, popularList);
+            renderHero(currenid);
+            console.log(copyTracks);
+
+            sectionPopular.hidden = false;
         }
         const item1 = e.target.closest(".library-play-list");
         const itemActive1 = document.querySelectorAll(
@@ -551,7 +549,7 @@ function handleClickItemArtists() {
                 itemActive1.classList.remove("active");
             }
             item1.classList.add("active");
-            id = item1.dataset.index;
+            let id = item1.dataset.index;
             renderHero1(id);
         }
     });
@@ -679,17 +677,15 @@ function handleRandomSong() {
 }
 async function handleSong() {
     const lastRandom = currenindex;
-    const tracks = await getTrendingTracks();
-    if (tracks.length !== 1) {
+    if (copyTracks.length !== 1) {
         do {
-            currenindex = Math.floor(Math.random() * tracks.length);
+            currenindex = Math.floor(Math.random() * copyTracks.length);
         } while (currenindex === lastRandom);
-        currenid = tracks[currenindex].id;
-        timeEnd.innerText = totalSongTime(tracks[currenindex].duration);
-        audio.src = tracks[currenindex].audio_url;
+        currenid = copyTracks[currenindex].id;
+        timeEnd.innerText = totalSongTime(copyTracks[currenindex].duration);
+        audio.src = copyTracks[currenindex].audio_url;
         activeSong(currenindex);
         handleScroll();
-        handleParam();
         iconPlay.classList.replace("fa-play", "fa-pause");
         if (isPlay && audio.readyState > 2) {
             audio.play();
@@ -736,14 +732,12 @@ function handleVolume() {
 // handle huge btn
 function handleBtnHuge() {
     btnHuge.addEventListener("click", async function (e) {
-        const tracks = await getTrendingTracks();
-        let currenindex = 0;
-        audio.src = tracks[currenindex].audio_url;
+        audio.src = copyTracks[currenindex].audio_url;
         audio.play();
         isPlay = true;
         activeSong(currenindex);
         iconPlay.classList.replace("fa-play", "fa-pause");
-        timeEnd.innerText = totalSongTime(tracks[currenindex].duration);
+        timeEnd.innerText = totalSongTime(copyTracks[currenindex].duration);
         handleTime();
     });
 }
@@ -814,28 +808,24 @@ function playDefault(play) {
 async function clickPopularSong() {
     const tracks = await getTrendingTracks();
     const list = $(".track-list");
-    list.addEventListener("click", (e) => {
+    list.addEventListener("click", async (e) => {
         const item = e.target.closest(".track-item");
         if (!item) return;
-        const index = item.dataset.index;
-        currenindex = index;
-        audio.src = tracks[index].audio_url;
-        currenid = tracks[index].id;
-        const song = tracks[index];
-        renderPlayerLeft(song);
+        currenindex = item.dataset.index;
+        const id = item.dataset.id;
+        audio.src = copyTracks[currenindex].audio_url;
+        renderPlayerLeft(copyTracks[currenindex]);
         audio.play();
         isPlay = true;
         iconPlay.classList.replace("fa-play", "fa-pause");
         activeSong(currenindex);
-        timeEnd.innerText = totalSongTime(tracks[index].duration);
+        timeEnd.innerText = totalSongTime(copyTracks[currenindex].duration);
         handleTime();
-        handleParam();
     });
 }
 
 // handle keydown
 async function handleKeyDown() {
-    const tracks = await getTrendingTracks();
     document.addEventListener("keydown", async function (e) {
         if (["input", "textarea"].includes(e.target.tagName.toLowerCase()))
             return;
@@ -846,11 +836,15 @@ async function handleKeyDown() {
                 break;
             case "ArrowRight":
                 e.preventDefault();
-                handlNextSong(tracks);
+                handlNextSong(copyTracks);
+                renderPlayerLeft(copyTracks[currenindex]);
+                activeSong(currenindex);
                 break;
             case "ArrowLeft":
                 e.preventDefault();
-                handelPrevSong(tracks);
+                handelPrevSong(copyTracks);
+                renderPlayerLeft(copyTracks[currenindex]);
+                activeSong(currenindex);
                 break;
             case "ArrowUp":
                 e.preventDefault();
@@ -899,8 +893,6 @@ export function initControl() {
     addPlaylist();
     handleClickCard();
     handleKeyDown();
-    handleParam();
-    handleURL();
     handleSearch();
     unfollow();
 }

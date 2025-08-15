@@ -6,10 +6,8 @@ import {
     $,
     $$,
     escapeHTML,
-    userRender,
     showToast,
     removeShowToast,
-    renderPlayerList,
     handlecreatePlaylist,
     handleFollw,
     handleGetState,
@@ -367,7 +365,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     let user = null;
     handleGetState();
     initControl();
-    userRender();
     showToast();
     try {
         const res = await httpRequest.get("users/me");
