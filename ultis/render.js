@@ -14,7 +14,6 @@ const playerLeft = $(".player-left");
 const iconUserView = $(".user-view");
 
 let playListsCache = null;
-let playArtists = null;
 let currentOrder = "asc";
 
 export async function createList() {
@@ -43,16 +42,6 @@ export async function getPlaylists() {
     const { playlists } = await httpRequest.get("me/playlists");
     playListsCache = playlists;
     return playlists;
-}
-
-export async function getArtists() {
-    if (playArtists) {
-        return playArtists;
-    }
-    const { artists } = await httpRequest.get("artists");
-
-    playArtists = artists;
-    return artists;
 }
 
 // render compact
@@ -219,6 +208,7 @@ export async function renderPopularSong(tracks, container) {
                                 )}</div>
                                 <button class="track-menu-btn">
                                     <i class="fas fa-ellipsis-h"></i>
+
                                 </button>
                         </div>
                     </div>`;

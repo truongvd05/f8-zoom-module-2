@@ -431,7 +431,7 @@
 
 /* Artist Controls */
 .artist-controls {
-    display: flex;
+    display: none;
     align-items: center;
     gap: var(--spacing-lg);
     margin-bottom: var(--spacing-2xl);
@@ -546,6 +546,7 @@
 }
 
 .track-menu-btn {
+    position: relative;
     width: 32px;
     height: 32px;
     border-radius: var(--radius-full);
@@ -555,11 +556,6 @@
     align-items: center;
     justify-content: center;
     transition: all var(--transition-fast);
-    opacity: 0;
-}
-
-.track-item:hover .track-menu-btn {
-    opacity: 1;
 }
 
 .track-menu-btn:hover {

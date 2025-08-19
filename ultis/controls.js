@@ -12,7 +12,6 @@ import {
     renderPlayerList,
     createList,
     getPlaylists,
-    getArtists,
     renderArtists,
     followArtist,
     renderPopularSong,
@@ -46,8 +45,10 @@ const follow = $(".fllow-artist");
 const scroll = $(".content-wrapper");
 const searchLibrary = $(".library-search");
 const popularList = $(".track-list");
+const progressFill = $(".progress-bar");
+const progressHandle = $(".progress-handle");
 
-let currenindex = 0;
+let currenindex = null;
 let currenid = null;
 let isPlay = false;
 let isVolume = true;
@@ -58,13 +59,25 @@ let ismoveVolume = false;
 let ismoveBar = false;
 let idArtist = null;
 let idAPlaylist = null;
+let copyTracks = null;
+
 const sectionControl = $(".artist-controls");
 const sectionPopular = $(".popular-section");
 const sectionAstist = $(".artist-hero");
 const sectionAstistCard = $(".artist-card");
+const sectionPlaylist = $(".playlist-controls");
 
-const params = new URLSearchParams(location.search);
 let trackCache = null;
+let playArtists = null;
+
+export async function getArtists() {
+    if (playArtists) {
+        return playArtists;
+    }
+    const { artists } = await httpRequest.get("me/following?limit=20&offset=0");
+    playArtists = artists;
+    return artists;
+}
 
 function handleSearch() {
     searchLibrary.addEventListener("input", async function (e) {
@@ -120,15 +133,6 @@ export async function handleGetState() {
         const time = saved.time ?? 0;
         const volume = saved.volume ?? 0.5;
         audio.volume = volume;
-        currenid = saved.id;
-        const res = await httpRequest.get(`tracks/${currenid}`);
-        audio.src = res.audio_url;
-        audio.currentTime = time;
-        timeEnd.innerText = totalSongTime(res.duration);
-        handleProgress();
-        isLoop = saved.loop;
-        handleTime(time);
-        renderPlayerLeft(res);
         if (isLoop) {
             loopBtn.classList.add("active");
         } else {
@@ -150,7 +154,6 @@ export function handleUserState() {
         })
     );
 }
-let copyTracks = null;
 async function getMusicData() {
     try {
         const { tracks } = await httpRequest.get(
@@ -168,6 +171,9 @@ function handleClickCard() {
         const target = e.target.closest(".card");
         const actived = $$(".card.active")[0];
         sectionAstistCard.style.display = "none";
+        sectionAstist.style.display = "flex";
+        sectionControl.hidden = false;
+        sectionPlaylist.hidden = true;
         if (!target) return;
         currenid = target.dataset.index;
         copyTracks = await getMusicData();
@@ -296,7 +302,6 @@ export function handlecreatePlaylist() {
             description: createDescription ? "Default" : valueDesctiption.value,
             image_url: url,
         };
-
         const res = await httpRequest.put(`playlists/${id}`, data);
         renderPlayerList();
         this.classList.remove("show");
@@ -329,23 +334,25 @@ function showPassWord(container) {
 function handleClickBar() {
     bar.addEventListener("mousedown", (e) => {
         ismoveBar = true;
-        UpdateProgress(e);
+        updateProgress(e);
     });
 }
+
+let percent = null;
+let percent1 = null;
 // update tiến trình
-function UpdateProgress(e) {
-    const progressFill = $(".progress-bar");
-    const progressHandle = $(".progress-handle");
+function updateProgress(e) {
     const rect = progressFill.getBoundingClientRect();
-    let percent = (e.clientX - rect.left) / rect.width;
-    let percent1 = e.clientX - rect.left;
-    percent = Math.min(Math.max(percent, 0), 1);
+    percent = (e.clientX - rect.left) / rect.width;
+    percent1 = e.clientX - rect.left;
     progressFill.style.width = `${percent}px`;
     progressHandle.style.left = `${percent1}px`;
+    percent = Math.min(Math.max(percent, 0), 1);
     if (audio.readyState > 0) {
         audio.currentTime = percent * audio.duration;
     }
 }
+
 // handle move on volume
 function changeVolume() {
     volumeBar.addEventListener("mousedown", (e) => {
@@ -357,7 +364,7 @@ function changeVolume() {
             updateVolume(e);
         }
         if (ismoveBar) {
-            UpdateProgress(e);
+            updateProgress(e);
         }
     });
     document.addEventListener("mouseup", function (e) {
@@ -427,14 +434,12 @@ async function handleControlSong() {
         if (e.target.closest(".next-btn")) {
             handlNextSong(copyTracks);
             handleProgress();
-            timeEnd.innerText = totalSongTime(copyTracks[currenindex].duration);
             activeSong(currenindex);
             renderPlayerLeft(copyTracks[currenindex]);
         }
         if (e.target.closest(".control-prev")) {
             handelPrevSong(copyTracks);
             handleProgress();
-            timeEnd.innerText = totalSongTime(copyTracks[currenindex].duration);
             activeSong(currenindex);
             renderPlayerLeft(copyTracks[currenindex]);
         }
@@ -449,6 +454,7 @@ function handlNextSong(tracks) {
     }
     currenindex++;
     currenindex = (currenindex + tracks.length) % tracks.length;
+    timeEnd.innerText = totalSongTime(copyTracks[currenindex].duration);
     activeSong(currenindex);
     currenid = tracks[currenindex].id;
     audio.src = tracks[currenindex].audio_url;
@@ -461,6 +467,7 @@ function handelPrevSong(tracks) {
     isPlay = true;
     currenindex--;
     currenindex = (currenindex + tracks.length) % tracks.length;
+    timeEnd.innerText = totalSongTime(copyTracks[currenindex].duration);
     activeSong(currenindex);
     currenid = tracks[currenindex].id;
     audio.src = tracks[currenindex].audio_url;
@@ -526,6 +533,8 @@ function handleClickItemArtists() {
         const item = e.target.closest(".library-artists");
         const itemActive = document.querySelector(".library-artists.active");
         sectionAstistCard.style.display = "none";
+        sectionAstist.hidden = false;
+        sectionPlaylist.hidden = true;
         if (item) {
             if (itemActive) {
                 itemActive.classList.remove("active");
@@ -594,7 +603,7 @@ function handleReload() {
     const home = $(".home-btn");
     const logo = $(".logo");
     function reloadHome() {
-        history.pushState({}, "", window.location.pathname);
+        history.replaceState({}, "", "/");
         location.reload();
     }
     home.addEventListener("click", reloadHome);
@@ -638,6 +647,7 @@ document.addEventListener("click", function (e) {
     if (!e.target.closest(".sort-btn") && !e.target.closest(".sort-btn-list")) {
         sortBtnList.classList.remove("show");
     }
+    if (e.target.closest(".add-trask")) return;
 });
 // user view as
 function handleView() {
@@ -747,7 +757,7 @@ audio.addEventListener("canplay", () => {
     }
 });
 audio.addEventListener("ended", async () => {
-    const tracks = await getTrendingTracks();
+    if (ismoveBar) return;
     if (isRandom) {
         handleSong();
         return;
@@ -756,8 +766,8 @@ audio.addEventListener("ended", async () => {
         audio.loop = isLoop;
     } else {
         audio.loop = isLoop;
-        handlNextSong(tracks);
-        renderPlayerLeft(tracks[currenindex]);
+        handlNextSong(copyTracks);
+        renderPlayerLeft(copyTracks[currenindex]);
         activeSong(currenindex);
     }
 });
@@ -806,13 +816,12 @@ function playDefault(play) {
 }
 
 async function clickPopularSong() {
-    const tracks = await getTrendingTracks();
     const list = $(".track-list");
     list.addEventListener("click", async (e) => {
         const item = e.target.closest(".track-item");
         if (!item) return;
         currenindex = item.dataset.index;
-        const id = item.dataset.id;
+        currenid = item.dataset.id;
         audio.src = copyTracks[currenindex].audio_url;
         renderPlayerLeft(copyTracks[currenindex]);
         audio.play();
