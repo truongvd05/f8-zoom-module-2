@@ -678,8 +678,7 @@ function handleReload() {
     const home = $(".home-btn");
     const logo = $(".logo");
     function reloadHome() {
-        history.replaceState({}, "", "/");
-        location.reload();
+        window.location.href = "/";
     }
     home.addEventListener("click", reloadHome);
     logo.addEventListener("click", reloadHome);
