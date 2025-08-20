@@ -17,6 +17,7 @@ import {
     renderPopularSong,
     renderTracksPlaylist,
     renderPlayerLeftAdd,
+    renderCard,
 } from "./module.js";
 
 const play = $(".play-btn");
@@ -605,14 +606,13 @@ function handleClickItemArtists() {
         const item = e.target.closest(".library-artists");
         const itemActive = document.querySelector(".library-artists.active");
         sectionAstistCard.style.display = "none";
-        sectionAstist.hidden = false;
+        sectionAstist.style.display = "block";
         sectionPlaylist.hidden = true;
         if (item) {
             if (itemActive) {
                 itemActive.classList.remove("active");
             }
             currenid = item.dataset.index;
-
             copyTracks = await getMusicData();
             item.classList.add("active");
             renderPopularSong(copyTracks, popularList);
@@ -678,7 +678,10 @@ function handleReload() {
     const home = $(".home-btn");
     const logo = $(".logo");
     function reloadHome() {
-        window.location.reload(true);
+        sectionAstistCard.style.display = "grid";
+        sectionAstist.style.display = "none";
+        sectionPopular.hidden = true;
+        renderCard();
     }
     home.addEventListener("click", reloadHome);
     logo.addEventListener("click", reloadHome);

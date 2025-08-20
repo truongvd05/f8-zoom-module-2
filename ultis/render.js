@@ -517,7 +517,7 @@ export async function renderHero1(idArtist) {
     element.innerHTML = html;
 }
 
-async function renderCard() {
+export async function renderCard() {
     const card = $(".artist-card");
     const { artists } = await httpRequest.get("artists");
     const html = artists
