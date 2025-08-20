@@ -272,7 +272,7 @@ export async function renderPopularSong(tracks, container) {
 
 export function renderPlayerLeft(item) {
     const newTracks = {
-        image_url: item.track_image_url || item.image_url,
+        image_url: item.album_cover_image_url || item.image_url,
         title: item.track_title || item.title,
         album_title: item.album_title || (item.album && item.album.title),
         id: item.id,

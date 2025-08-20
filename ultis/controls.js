@@ -124,6 +124,8 @@ function handleAddTracks() {
             } else {
                 console.log("Đã hủy!");
             }
+            copyTracks = await getMusicPlaylist();
+            renderTracksPlaylist(copyTracks, popularList);
             renderPlayerList();
         }
     });
@@ -525,6 +527,7 @@ function handlNextSong(tracks) {
     currenindex = (currenindex + newTracks.length) % newTracks.length;
     timeEnd.innerText = totalSongTime(newTracks[currenindex].duration);
     activeSong(currenindex);
+    activeSong1(currenindex);
     currenid = newTracks[currenindex].id;
     audio.src = newTracks[currenindex].audio_url;
     iconPlay.classList.replace("fa-play", "fa-pause");
