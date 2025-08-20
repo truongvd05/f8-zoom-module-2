@@ -476,7 +476,7 @@
     margin-top: var(--spacing-lg);
 }
 
-.track-item {
+.track-item,.add-item {
     display: grid;
     grid-template-columns: 16px 40px 1fr auto auto auto auto;
     gap: var(--spacing-md);
@@ -487,13 +487,14 @@
     cursor: pointer;
 }
 
-.track-item:hover {
+.track-item:hover,.add-item:hover {
     background-color: var(--bg-tertiary);
 }
 
-.track-item.playing {
+.track-item.playing,.add-item.playing {
     background-color: var(--bg-tertiary);
 }
+
 
 .track-number {
     font-size: 16px;

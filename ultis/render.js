@@ -16,6 +16,18 @@ const iconUserView = $(".user-view");
 let playListsCache = null;
 let currentOrder = "asc";
 
+async function listadd() {
+    const container = $(".add-playlist");
+    const { playlists } = await httpRequest.get("me/playlists");
+    const html = playlists
+        .map((item) => {
+            return `<li class="item-playlist" data-id="${item.id}">${escapeHTML(
+                item.name
+            )}</li>`;
+        })
+        .join("");
+    container.innerHTML = html;
+}
 export async function createList() {
     const myplaylist = $(".my-playlist");
     const { playlists } = await httpRequest.get("me/playlists");
@@ -57,7 +69,7 @@ function renderCompact(list, order = "desc") {
     });
     const html = list
         .map((item) => {
-            return `<li class="library-item library-play-list" data-index="${
+            return `<li class="library-item library-play-list" data-id="${
                 item.id
             }">
                                 ${escapeHTML(item.name)}
@@ -85,7 +97,7 @@ function renderGrid(list, order = "desc") {
         .map((item) => {
             return `<li
                         class="library-play-list"
-                        data-index="${item.id}"
+                        data-id="${item.id}"
                     >
                         <img src="${escapeHTML(
                             item.image_url
@@ -156,7 +168,7 @@ async function renderPlayList(order = "desc") {
     });
     const html = playlists
         .map((item) => {
-            return `<div class="library-item library-play-list" data-index="${
+            return `<div class="library-item library-play-list" data-id="${
                 item.id
             }">
                         <div class="item-icon liked-songs">
@@ -177,6 +189,47 @@ async function renderPlayList(order = "desc") {
         })
         .join("");
     library.innerHTML = html;
+}
+
+export async function renderTracksPlaylist(tracks, container) {
+    container.innerHTML = "";
+    if (tracks < 1) {
+        container.innerText = "bạn chưa thêm bài hát nào";
+        return;
+    }
+    const html = tracks
+        .map((item, index) => {
+            return `<div class="add-item"
+             data-index="${index}" data-id="${item.track_id}">
+                        <div class="track-number">${sum(index)}</div>
+                                <div class="track-image">
+                                    <img
+                                        src="${escapeHTML(
+                                            item.artist_image_url
+                                        )}"
+                                        alt="${escapeHTML(item.track_title)}"
+                                    />
+                                </div>
+                                <div class="track-info">
+                                    <div class="track-name">
+                                        ${escapeHTML(item.track_title)}
+                                    </div>
+                                </div>
+                                <div class="track-plays">${escapeHTML(
+                                    item.track_play_count.toLocaleString()
+                                )}</div>
+                                <div class="track-duration">${totalSongTime(
+                                    item.track_duration
+                                )}</div>
+                                <button class="track-menu-btn">
+                                    <i class="fas fa-ellipsis-h"></i>
+
+                                </button>
+                        </div>
+                    </div>`;
+        })
+        .join("");
+    container.innerHTML = html;
 }
 
 export async function renderPopularSong(tracks, container) {
@@ -218,14 +271,39 @@ export async function renderPopularSong(tracks, container) {
 }
 
 export function renderPlayerLeft(item) {
+    const newTracks = {
+        image_url: item.track_image_url || item.image_url,
+        title: item.track_title || item.title,
+        album_title: item.album_title || (item.album && item.album.title),
+        id: item.id,
+    };
     const html = `<img
-                    src="${escapeHTML(item.image_url)}"
-                    alt="${escapeHTML(item.title)}"
+                    src="${escapeHTML(newTracks.image_url)}"
+                    alt="${escapeHTML(newTracks.title)}"
                     class="player-image"
                 />
                 <div class="player-info">
                     <div class="player-title">
-                        ${escapeHTML(item.title)}
+                        ${escapeHTML(newTracks.title)}
+                    </div>
+                    <div class="player-artist">${escapeHTML(
+                        newTracks.album_title
+                    )}</div>
+                </div>
+                <button class="add-btn">
+                    <i class="fa-solid fa-plus"></i>
+                </button>`;
+    playerLeft.innerHTML = html;
+}
+export function renderPlayerLeftAdd(item) {
+    const html = `<img
+                    src="${escapeHTML(item.artist_image_url)}"
+                    alt="${escapeHTML(item.track_title)}"
+                    class="player-image"
+                />
+                <div class="player-info">
+                    <div class="player-title">
+                        ${escapeHTML(item.track_title)}
                     </div>
                     <div class="player-artist">${escapeHTML(
                         item.album_title
@@ -463,7 +541,7 @@ export async function renderPlayerList(playlists = null) {
     }
     const html = playlists
         .map((item) => {
-            return `<div class="library-item library-play-list" data-index="${
+            return `<div class="library-item library-play-list" data-id="${
                 item.id
             }">
                         <div class="item-icon liked-songs">
@@ -493,4 +571,5 @@ export async function initPopularSong() {
     renderCard();
     renderCardHero();
     renderSortBy();
+    listadd();
 }

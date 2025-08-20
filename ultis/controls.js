@@ -15,6 +15,8 @@ import {
     renderArtists,
     followArtist,
     renderPopularSong,
+    renderTracksPlaylist,
+    renderPlayerLeftAdd,
 } from "./module.js";
 
 const play = $(".play-btn");
@@ -47,6 +49,8 @@ const searchLibrary = $(".library-search");
 const popularList = $(".track-list");
 const progressFill = $(".progress-bar");
 const progressHandle = $(".progress-handle");
+const contextmenuTracks = $(".contextmenu-add-tracks");
+const deletcontextmenu = $(".contextmenu-delete-tracks");
 
 let currenindex = null;
 let currenid = null;
@@ -60,6 +64,10 @@ let ismoveBar = false;
 let idArtist = null;
 let idAPlaylist = null;
 let copyTracks = null;
+let playlistTracks = null;
+let playlistId = null;
+let playlistIndex = null;
+let currendidAdd = null;
 
 const sectionControl = $(".artist-controls");
 const sectionPopular = $(".popular-section");
@@ -78,7 +86,49 @@ export async function getArtists() {
     playArtists = artists;
     return artists;
 }
-
+// add tracks to playlist
+function handleAddTracks() {
+    contextmenuTracks.addEventListener("click", async function (e) {
+        const target = e.target.closest(".item-playlist");
+        if (!target) return;
+        playlistId = target.dataset.id;
+        const data = {
+            track_id: currendidAdd,
+            position: 0,
+        };
+        try {
+            const res = await httpRequest.post(
+                `playlists/${playlistId}/tracks`,
+                data
+            );
+            const message = res.message;
+            showNotification(message);
+        } catch (error) {
+            const message = error?.response?.error?.message;
+            showNotification(message);
+        }
+        renderPlayerList();
+    });
+    deletcontextmenu.addEventListener("click", async function (e) {
+        const target = e.target.closest(".delete-tracks");
+        if (target) {
+            const isConfirmed = confirm(
+                "Bạn có chắc chắn muốn xóa bài hát này không?"
+            );
+            if (isConfirmed) {
+                const res = await httpRequest.del(
+                    `playlists/${playlistId}/tracks/${currendidAdd}`
+                );
+                const message = res.message;
+                showNotification(message);
+            } else {
+                console.log("Đã hủy!");
+            }
+            renderPlayerList();
+        }
+    });
+}
+// search
 function handleSearch() {
     searchLibrary.addEventListener("input", async function (e) {
         const input = searchLibrary.value.trim().toLowerCase();
@@ -117,6 +167,7 @@ export async function getTrendingTracks(limit = 20) {
 // /handle scroll
 function handleScroll() {
     const songs = $$(".track-item");
+    if (!songs.length) return;
     const currenSong = songs[currenindex];
     const offset = 300;
     const rect = currenSong.getBoundingClientRect();
@@ -164,6 +215,17 @@ async function getMusicData() {
         console.error("Lỗi lấy dữ liệu:", error);
     }
     return copyTracks;
+}
+async function getMusicPlaylist() {
+    try {
+        const { tracks } = await httpRequest.get(
+            `playlists/${playlistId}/tracks`
+        );
+        playlistTracks = JSON.parse(JSON.stringify(tracks));
+    } catch (error) {
+        console.error("Lỗi lấy dữ liệu:", error);
+    }
+    return playlistTracks;
 }
 // active card
 function handleClickCard() {
@@ -452,12 +514,19 @@ function handlNextSong(tracks) {
         handleSong();
         return;
     }
+    const newTracks = tracks.map((t) => {
+        return {
+            id: t.id,
+            duration: t.duration || t.track_duration,
+            audio_url: t.audio_url || t.track_audio_url,
+        };
+    });
     currenindex++;
-    currenindex = (currenindex + tracks.length) % tracks.length;
-    timeEnd.innerText = totalSongTime(copyTracks[currenindex].duration);
+    currenindex = (currenindex + newTracks.length) % newTracks.length;
+    timeEnd.innerText = totalSongTime(newTracks[currenindex].duration);
     activeSong(currenindex);
-    currenid = tracks[currenindex].id;
-    audio.src = tracks[currenindex].audio_url;
+    currenid = newTracks[currenindex].id;
+    audio.src = newTracks[currenindex].audio_url;
     iconPlay.classList.replace("fa-play", "fa-pause");
     handleScroll();
     audio.play();
@@ -558,8 +627,11 @@ function handleClickItemArtists() {
                 itemActive1.classList.remove("active");
             }
             item1.classList.add("active");
-            let id = item1.dataset.index;
-            renderHero1(id);
+            playlistId = item1.dataset.id;
+            copyTracks = await getMusicPlaylist();
+            renderHero1(playlistId);
+            renderTracksPlaylist(copyTracks, popularList);
+            sectionPopular.hidden = false;
         }
     });
 }
@@ -648,6 +720,8 @@ document.addEventListener("click", function (e) {
         sortBtnList.classList.remove("show");
     }
     if (e.target.closest(".add-trask")) return;
+    contextmenuTracks.style.display = "none";
+    deletcontextmenu.style.display = "none";
 });
 // user view as
 function handleView() {
@@ -819,17 +893,52 @@ async function clickPopularSong() {
     const list = $(".track-list");
     list.addEventListener("click", async (e) => {
         const item = e.target.closest(".track-item");
-        if (!item) return;
-        currenindex = item.dataset.index;
-        currenid = item.dataset.id;
-        audio.src = copyTracks[currenindex].audio_url;
-        renderPlayerLeft(copyTracks[currenindex]);
-        audio.play();
-        isPlay = true;
-        iconPlay.classList.replace("fa-play", "fa-pause");
-        activeSong(currenindex);
-        timeEnd.innerText = totalSongTime(copyTracks[currenindex].duration);
-        handleTime();
+        const item1 = e.target.closest(".add-item");
+        if (item) {
+            currenindex = item.dataset.index;
+            currenid = item.dataset.id;
+            audio.src = copyTracks[currenindex].audio_url;
+            renderPlayerLeft(copyTracks[currenindex]);
+            audio.play();
+            isPlay = true;
+            iconPlay.classList.replace("fa-play", "fa-pause");
+            activeSong(currenindex);
+            timeEnd.innerText = totalSongTime(copyTracks[currenindex].duration);
+            handleTime();
+        }
+        if (item1) {
+            currenindex = item1.dataset.index;
+            currenid = item1.dataset.id;
+            audio.src = copyTracks[currenindex].track_audio_url;
+            audio.play();
+            isPlay = true;
+            renderPlayerLeftAdd(copyTracks[currenindex]);
+            iconPlay.classList.replace("fa-play", "fa-pause");
+            activeSong1(currenindex);
+            timeEnd.innerText = totalSongTime(
+                copyTracks[currenindex].track_duration
+            );
+            handleTime();
+        }
+    });
+    list.addEventListener("contextmenu", function (e) {
+        const item = e.target.closest(".track-item");
+        const item1 = e.target.closest(".add-item");
+
+        if (item) {
+            currenindex = item.dataset.index;
+            currendidAdd = item.dataset.id;
+            contextmenuTracks.style.display = "inline-block";
+            contextmenuTracks.style.left = e.pageX + "px";
+            contextmenuTracks.style.top = e.pageY + "px";
+        }
+        if (item1) {
+            currenindex = item1.dataset.index;
+            currendidAdd = item1.dataset.id;
+            deletcontextmenu.style.display = "inline-block";
+            deletcontextmenu.style.left = e.pageX + "px";
+            deletcontextmenu.style.top = e.pageY + "px";
+        }
     });
 }
 
@@ -880,6 +989,14 @@ function activeSong(currenindex) {
     if (newActive) newActive.classList.add("playing");
 }
 
+function activeSong1(currenindex) {
+    const current = $$(".add-item.playing")[0];
+    const songs = $$(".add-item");
+    if (current) current.classList.remove("playing");
+    const newActive = songs[currenindex];
+    if (newActive) newActive.classList.add("playing");
+}
+
 export function initControl() {
     handleRandomSong();
     handleLoopSong();
@@ -904,4 +1021,5 @@ export function initControl() {
     handleKeyDown();
     handleSearch();
     unfollow();
+    handleAddTracks();
 }
