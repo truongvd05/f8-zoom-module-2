@@ -356,6 +356,7 @@ export function handlecreatePlaylist() {
         sectionControl.hidden = false;
         sectionPopular.hidden = false;
         sectionAstist.hidden = false;
+        sectionPlaylist.style.display = "gird";
         sectionAstistCard.style.display = "grid";
     });
     createBtn.addEventListener("click", async function () {
@@ -373,6 +374,8 @@ export function handlecreatePlaylist() {
         sectionControl.hidden = true;
         sectionPopular.hidden = true;
         sectionAstist.hidden = true;
+        sectionPlaylist.style.display = "none";
+
         sectionAstistCard.style.display = "none";
         renderPlayerList();
     });
