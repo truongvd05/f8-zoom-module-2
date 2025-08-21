@@ -63,7 +63,6 @@ let lastVolume = audio.volume;
 let ismoveVolume = false;
 let ismoveBar = false;
 let idArtist = null;
-let idAPlaylist = null;
 let copyTracks = null;
 let playlistTracks = null;
 let playlistId = null;
@@ -601,7 +600,7 @@ contexMenuPlayList.addEventListener("click", async function (e) {
     const target = $(".section-input.show");
     if (e.target.closest(".playlist-delete")) {
         try {
-            const res = await httpRequest.del(`playlists/${idAPlaylist}`);
+            const res = await httpRequest.del(`playlists/${playlistId}`);
             renderPlayerList();
         } catch (error) {
             const message = error?.response?.error?.message;
@@ -753,8 +752,7 @@ function handleSidebarContextMenu() {
         if (playlist) {
             const mouseX = e.pageX;
             const mouseY = e.pageY;
-            idAPlaylist = playlist.dataset.index;
-
+            playlistId = playlist.dataset.id;
             // Gán vị trí cho phần tử
             contexMenuPlayList.style.left = `${mouseX}px`;
             contexMenuPlayList.style.top = `${mouseY}px`;
