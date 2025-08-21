@@ -104,6 +104,17 @@ function handleClickPlaylist() {
         sectionPopular.hidden = false;
         renderTracksPlaylist(copyTracks, popularList);
     });
+    sectionPlaylist.addEventListener("contextmenu", function (e) {
+        const item = e.target.closest(".card-playlist");
+        if (!item) return;
+        const mouseX = e.pageX;
+        const mouseY = e.pageY;
+        playlistId = item.dataset.id;
+        // Gán vị trí cho phần tử
+        contexMenuPlayList.style.left = `${mouseX}px`;
+        contexMenuPlayList.style.top = `${mouseY}px`;
+        contexMenuPlayList.classList.toggle("show");
+    });
 }
 // add tracks to playlist
 function handleAddTracks() {
@@ -156,7 +167,7 @@ function handleAddTracks() {
                     }
                 }
             } else {
-                console.log("Đã hủy!");
+                showNotification("Đã hủy yêu cầu!");
             }
             copyTracks = await getMusicPlaylist();
             renderTracksPlaylist(copyTracks, popularList);
@@ -599,22 +610,30 @@ function handelPrevSong(tracks) {
 contexMenuPlayList.addEventListener("click", async function (e) {
     const target = $(".section-input.show");
     if (e.target.closest(".playlist-delete")) {
-        try {
-            const res = await httpRequest.del(`playlists/${playlistId}`);
-            renderPlayerList();
-        } catch (error) {
-            const message = error?.response?.error?.message;
-            switch (error?.response?.error?.code) {
-                case "PERMISSION_DENIED":
-                    showNotification(message);
-                    break;
-                case "RATE_LIMIT_EXCEEDED":
-                    showNotification(message);
-                    break;
-                default:
-                    console.log("có lỗi xảy ra");
-                    break;
+        const isConfirmed = confirm(
+            "Bạn có chắc chắn muốn xóa bài hát này không?"
+        );
+        if (isConfirmed) {
+            try {
+                const res = await httpRequest.del(`playlists/${playlistId}`);
+                showNotification("Đã xóa thành công");
+                renderPlayerList();
+            } catch (error) {
+                const message = error?.response?.error?.message;
+                switch (error?.response?.error?.code) {
+                    case "PERMISSION_DENIED":
+                        showNotification(message);
+                        break;
+                    case "RATE_LIMIT_EXCEEDED":
+                        showNotification(message);
+                        break;
+                    default:
+                        console.log("có lỗi xảy ra");
+                        break;
+                }
             }
+        } else {
+            showNotification("Đã hủy yêu cầu");
         }
     }
     // tắt khi người dùng xóa playlist mà không sửa
