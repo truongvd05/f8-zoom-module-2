@@ -75,6 +75,7 @@ const sectionPopular = $(".popular-section");
 const sectionAstist = $(".artist-hero");
 const sectionAstistCard = $(".artist-card");
 const sectionPlaylist = $(".playlist-controls");
+const sectionAll = $(".all-playlist");
 
 let trackCache = null;
 let playArtists = null;
@@ -86,6 +87,24 @@ export async function getArtists() {
     const { artists } = await httpRequest.get("me/following?limit=20&offset=0");
     playArtists = artists;
     return artists;
+}
+
+// handle click playlist
+function handleClickPlaylist() {
+    sectionPlaylist.addEventListener("click", async function (e) {
+        const item = e.target.closest(".card-playlist");
+        if (!item) return;
+        sectionAstistCard.style.display = "none";
+        sectionAstist.style.display = "block";
+        sectionPlaylist.style.display = "none";
+        sectionAll.hidden = true;
+        playlistId = item.dataset.id;
+        playlistIndex = item.dataset.index;
+        copyTracks = await getMusicPlaylist();
+        renderHero1(playlistId);
+        sectionPopular.hidden = false;
+        renderTracksPlaylist(copyTracks, popularList);
+    });
 }
 // add tracks to playlist
 function handleAddTracks() {
@@ -117,11 +136,26 @@ function handleAddTracks() {
                 "Bạn có chắc chắn muốn xóa bài hát này không?"
             );
             if (isConfirmed) {
-                const res = await httpRequest.del(
-                    `playlists/${playlistId}/tracks/${currendidAdd}`
-                );
-                const message = res.message;
-                showNotification(message);
+                try {
+                    const res = await httpRequest.del(
+                        `playlists/${playlistId}/tracks/${currendidAdd}`
+                    );
+                    const message = res.message;
+                    showNotification(message);
+                } catch (error) {
+                    const message1 = error?.response?.error?.message;
+                    switch (error?.response?.error?.code) {
+                        case "PERMISSION_DENIED":
+                            showNotification(message1);
+                            break;
+                        case "RATE_LIMIT_EXCEEDED":
+                            showNotification(message1);
+                            break;
+                        default:
+                            console.log("có lỗi xảy ra");
+                            break;
+                    }
+                }
             } else {
                 console.log("Đã hủy!");
             }
@@ -238,7 +272,8 @@ function handleClickCard() {
         sectionAstistCard.style.display = "none";
         sectionAstist.style.display = "flex";
         sectionControl.hidden = false;
-        sectionPlaylist.hidden = true;
+        sectionPlaylist.style.display = "none";
+        sectionAll.hidden = true;
         if (!target) return;
         currenid = target.dataset.index;
         copyTracks = await getMusicData();
@@ -537,13 +572,25 @@ function handlNextSong(tracks) {
 }
 // handle prve song
 function handelPrevSong(tracks) {
+    if (isRandom) {
+        handleSong();
+        return;
+    }
+    const newTracks = tracks.map((t) => {
+        return {
+            id: t.id,
+            duration: t.duration || t.track_duration,
+            audio_url: t.audio_url || t.track_audio_url,
+        };
+    });
     isPlay = true;
     currenindex--;
-    currenindex = (currenindex + tracks.length) % tracks.length;
-    timeEnd.innerText = totalSongTime(copyTracks[currenindex].duration);
+    currenindex = (currenindex + newTracks.length) % newTracks.length;
+    timeEnd.innerText = totalSongTime(newTracks[currenindex].duration);
     activeSong(currenindex);
-    currenid = tracks[currenindex].id;
-    audio.src = tracks[currenindex].audio_url;
+    activeSong1(currenindex);
+    currenid = newTracks[currenindex].id;
+    audio.src = newTracks[currenindex].audio_url;
     iconPlay.classList.replace("fa-play", "fa-pause");
     audio.play();
     handleScroll();
@@ -607,7 +654,8 @@ function handleClickItemArtists() {
         const itemActive = document.querySelector(".library-artists.active");
         sectionAstistCard.style.display = "none";
         sectionAstist.style.display = "block";
-        sectionPlaylist.hidden = true;
+        sectionPlaylist.style.display = "none";
+        sectionAll.hidden = true;
         if (item) {
             if (itemActive) {
                 itemActive.classList.remove("active");
@@ -617,8 +665,6 @@ function handleClickItemArtists() {
             item.classList.add("active");
             renderPopularSong(copyTracks, popularList);
             renderHero(currenid);
-            console.log(copyTracks);
-
             sectionPopular.hidden = false;
         }
         const item1 = e.target.closest(".library-play-list");
@@ -680,7 +726,9 @@ function handleReload() {
     function reloadHome() {
         sectionAstistCard.style.display = "grid";
         sectionAstist.style.display = "none";
+        sectionPlaylist.style.display = "grid";
         sectionPopular.hidden = true;
+        sectionAll.hidden = false;
         renderCard();
     }
     home.addEventListener("click", reloadHome);
@@ -766,14 +814,23 @@ function handleRandomSong() {
 }
 async function handleSong() {
     const lastRandom = currenindex;
-    if (copyTracks.length !== 1) {
+    const newTracks = copyTracks.map((t) => {
+        return {
+            id: t.id,
+            duration: t.duration || t.track_duration,
+            audio_url: t.audio_url || t.track_audio_url,
+        };
+    });
+    if (newTracks.length !== 1) {
         do {
-            currenindex = Math.floor(Math.random() * copyTracks.length);
+            currenindex = Math.floor(Math.random() * newTracks.length);
         } while (currenindex === lastRandom);
-        currenid = copyTracks[currenindex].id;
-        timeEnd.innerText = totalSongTime(copyTracks[currenindex].duration);
-        audio.src = copyTracks[currenindex].audio_url;
+        currenid = newTracks[currenindex].id;
+        timeEnd.innerText = totalSongTime(newTracks[currenindex].duration);
+        audio.src = newTracks[currenindex].audio_url;
         activeSong(currenindex);
+        activeSong1(currenindex);
+
         handleScroll();
         iconPlay.classList.replace("fa-play", "fa-pause");
         if (isPlay && audio.readyState > 2) {
@@ -1027,4 +1084,5 @@ export function initControl() {
     handleSearch();
     unfollow();
     handleAddTracks();
+    handleClickPlaylist();
 }

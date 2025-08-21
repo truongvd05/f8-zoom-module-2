@@ -12,6 +12,7 @@ const listArtists = $(".nav-tabs");
 const playList = $(".js-player-list");
 const playerLeft = $(".player-left");
 const iconUserView = $(".user-view");
+const cardPlaylist = $(".playlist-controls");
 
 let playListsCache = null;
 let currentOrder = "asc";
@@ -491,9 +492,9 @@ export async function renderHero(id) {
     element.innerHTML = html;
 }
 
-export async function renderHero1(idArtist) {
+export async function renderHero1(id) {
     const element = $(".artist-hero");
-    const res = await httpRequest.get(`playlists/${idArtist}`);
+    const res = await httpRequest.get(`playlists/${id}`);
 
     // const { user } = await httpRequest.get("users/me");
     const html = `<div class="hero-background">
@@ -535,6 +536,29 @@ export async function renderCard() {
         .join("");
     card.innerHTML = html;
 }
+
+export async function renderCardPlaylist() {
+    const { playlists } = await httpRequest.get("playlists?limit=20&offset=0");
+    const html = playlists
+        .map((item, index) => {
+            return `<div class="card-playlist" data-index="${index}" data-id="${
+                item.id
+            }">
+                    <img class="card-img" src="${escapeHTML(
+                        item.image_url
+                    )}" alt="" />
+                    <div class="card-info">
+                        <div class="card-title">${escapeHTML(item.name)}</div>
+                        <div class="card-subtitle">${escapeHTML(
+                            item.user_username
+                        )}</div>
+                        <div>${item.total_tracks} songs</div>
+                    </div>
+                </div>`;
+        })
+        .join("");
+    cardPlaylist.innerHTML += html;
+}
 export async function renderPlayerList(playlists = null) {
     if (!playlists) {
         var { playlists } = await httpRequest.get("me/playlists");
@@ -572,4 +596,5 @@ export async function initPopularSong() {
     renderCardHero();
     renderSortBy();
     listadd();
+    renderCardPlaylist();
 }

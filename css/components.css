@@ -1410,19 +1410,18 @@
     transform: scale(1.1);
 }
 
-.artist-card {
+.artist-card,.playlist-controls {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 16px;
     margin-bottom: 50px;
 }
-
-.card {
+.card,.card-playlist {
     padding: 10px;
     border-radius: 5px;
 }
 
-.card:hover {
+.card:hover,.card-playlist:hover {
     background-color: var(--bg-hover);
 }
 

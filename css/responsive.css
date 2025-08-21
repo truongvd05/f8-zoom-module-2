@@ -20,7 +20,7 @@
     .track-item {
         grid-template-columns: 16px 40px 3fr 1fr auto auto auto;
     }
-    .artist-card {
+    .artist-card,.playlist-controls {
         grid-template-columns: repeat(3, 1fr);
 
     }
@@ -65,7 +65,7 @@
     .search-container {
         max-width: 300px;
     }
-        .artist-card {
+        .artist-card,.playlist-controls {
         grid-template-columns: repeat(3, 1fr);
 
     }
@@ -82,7 +82,7 @@
         gap: 0;
         padding: 0;
     }
-    .artist-card {
+    .artist-card,.playlist-controls {
         grid-template-columns: repeat(3, 1fr);
 
     }
@@ -262,7 +262,7 @@
     .artist-name {
         font-size: 28px;
     }
-    .artist-card {
+    .artist-card,.playlist-controls {
         grid-template-columns: repeat(2, 1fr);
 
     }
